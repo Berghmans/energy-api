@@ -4,12 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-entsog-py = "*"
-entsoe-py = "*"
-pandas = "*"
-openpyxl = "*"
-requests = "*"
 beautifulsoup4 = "*"
+requests = "*"
 
 [dev-packages]
 

@@ -1,7 +1,5 @@
 from entsog import EntsogPandasClient
 import pandas as pd
-import json
-from pathlib import Path
 
 client = EntsogPandasClient()
 
@@ -34,7 +32,7 @@ print(keys)
 # client.query_tariffs(start = start, end = end, country_code = country_code)
 # client.query_tariffs_sim(start = start, end = end, country_code = country_code)
 
-# operational_options = {   
+# operational_options = {
 #     interruption_capacity : "Actual interruption of interruptible capacity",
 #     allocation : "Allocation",
 #     firm_available : "Firm Available",

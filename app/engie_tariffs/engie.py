@@ -1,33 +1,44 @@
+"""Module for retrieving the indexation parameters from Engie"""
 from dataclasses import dataclass
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 import locale
 
+
+GAS_URL = 'https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-gas/'
+ENERGY_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-elektriciteit/"
+
+
 def convert_month(month: str) -> int:
-    """Convert the month"""
+    """Convert the month in a numeric value"""
+    original = locale.getlocale()
     for language in ["nl_NL", "en_US"]:
         try:
-            locale.setlocale(locale.LC_ALL, "nl_NL")
-            return datetime.strptime(month, "%B").month
+            locale.setlocale(locale.LC_ALL, language)
+            result = datetime.strptime(month, "%B").month
+            locale.setlocale(locale.LC_ALL, original)
+            return result
         except ValueError:
             pass
+    locale.setlocale(locale.LC_ALL, original)
     return ValueError("Not able to translate")
 
+
 @dataclass
-class IndexValue:
-    month: str
-    year: int
+class IndexationParameter:
+    """Indexation parameter class"""
     index: str
+    year: int
+    month: int
     value: float
 
     @classmethod
     def from_cell(cls, month, year, cell):
-        """"""
+        """Parse the value from a table cell"""
         index_value = cell.select_one("span.table_mobile_header p strong").text
         data_span = cell.select_one("span.table_mobile_data")
         value = data_span.get_text().strip()
-
         return cls(
             month=convert_month(month),
             year=year,
@@ -37,14 +48,15 @@ class IndexValue:
 
     @staticmethod
     def from_row(row):
+        """Parse the indexation parameters from a table row"""
         if len(row) == 0:
             return []
         date_cell = row[0]
         data_value = date_cell.select_one("span div p").text
-        if not "kwartaal" in data_value:
+        if "kwartaal" not in data_value:
             month, year = data_value.replace(u'\xa0', ' ').split(" ")
             values = [
-                IndexValue.from_cell(month, int(year), cell)
+                IndexationParameter.from_cell(month, int(year), cell)
                 for cell in row[1:]
             ]
             return list(filter(lambda item: item is not None and item.value is not None, values))
@@ -61,22 +73,5 @@ class IndexValue:
         return [
             index_value
             for row in table.find_all("div", class_="table_row")
-            for index_value in IndexValue.from_row(row.find_all("div", class_="table_cell"))
+            for index_value in IndexationParameter.from_row(row.find_all("div", class_="table_cell"))
         ]
-
-gas_url = 'https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-gas/'
-ele_url = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-elektriciteit/"
-
-gas_index_values = IndexValue.from_url(gas_url)
-ele_index_values = IndexValue.from_url(ele_url)
-
-print([
-    index_value
-    for index_value in gas_index_values
-    if index_value.year == 2023 and index_value.index == "ZTP DAM"
-])
-print([
-    index_value
-    for index_value in ele_index_values
-    if index_value.year == 2023 and index_value.index == "Epex DAM"
-])

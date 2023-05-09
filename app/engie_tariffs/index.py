@@ -3,13 +3,13 @@ from dataclasses import asdict
 from functools import cache
 import json
 
-from engie import IndexationParameter, GAS_URL, ENERGY_URL
+from engie import EngieIndexingSetting, GAS_URL, ENERGY_URL
 
 
 @cache
-def get_index_values() -> list[IndexationParameter]:
+def get_index_values() -> list[EngieIndexingSetting]:
     """Get the list of values"""
-    return IndexationParameter.from_url(GAS_URL) + IndexationParameter.from_url(ENERGY_URL)
+    return EngieIndexingSetting.from_url(GAS_URL) + EngieIndexingSetting.from_url(ENERGY_URL)
 
 
 def handler(event, _context):
@@ -20,9 +20,13 @@ def handler(event, _context):
     req_month = event.get("MONTH", last_month.month)
     index_values = get_index_values()
 
-    result = [index_value for index_value in index_values if index_value.year == req_year and index_value.month == req_month and index_value.index == req_index]
+    result = [
+        index_value
+        for index_value in index_values
+        if index_value.date.year == req_year and index_value.date.month == req_month and index_value.name == req_index
+    ]
     if len(result) == 1:
-        return {"statusCode": 200, "body": json.dumps(asdict(result[0]))}
+        return {"statusCode": 200, "body": json.dumps(asdict(result[0]), default=str)}
 
 
 if __name__ == "__main__":

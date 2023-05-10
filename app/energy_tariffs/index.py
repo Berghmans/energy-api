@@ -36,6 +36,7 @@ def get_end_price(index_name: str, year: int, month: int, slope: float, intercep
 
 def handler(event, _context):
     """The handler"""
+    print(json.dumps(event))
     last_month = date.today().replace(day=1) - timedelta(days=1)
     question_type = event["TYPE"]
 

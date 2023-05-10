@@ -86,6 +86,21 @@ Resources:
             Action:
               - "sts:AssumeRole"
 
+  LambdaEnergyTariffPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: logs
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Resource: !GetAtt LambdaEnergyTariffLogs.Arn
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+      Roles:
+        - !Ref LambdaEnergyTariffRole
+
   LambdaEnergyTariff:
     Type: AWS::Serverless::Function
     Properties:

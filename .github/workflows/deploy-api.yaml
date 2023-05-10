@@ -33,10 +33,17 @@ jobs:
         run: >2
           sam build
           --config-file samconfig.toml
-      - name: sam deploy
+      - name: sam package
         run: >2
-          sam deploy
+          sam package
           --config-file samconfig.toml
-          --stack-name ${{ vars.STACK_NAME }}
-          --role-arn ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          --output-template-file templates/packaged.yaml
           --s3-bucket ${{ vars.ARTIFACTS_BUCKET }}
+      - uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ vars.STACK_NAME }}
+          template: templates/packaged.yaml
+          role-arn: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >-
+            DomainName=energy.berghmans.it

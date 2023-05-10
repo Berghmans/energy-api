@@ -1,4 +1,5 @@
 ---
+name: deploy-api
 on:
   workflow_run:
     workflows: [checks]

@@ -29,5 +29,14 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           role-session-name: ${{ github.triggering_actor }}
           aws-region: ${{ vars.AWS_REGION }}
-      - run: sam build --template templates/api.yaml --base-dir .
-      - run: sam deploy --template templates/api.yaml --stack-name ${{ vars.STACK_NAME }} --s3-bucket ${{ vars.ARTIFACTS_BUCKET }} --s3-prefix energy --role-arn ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+      - name: sam build
+        run: >2
+          sam build
+          --config-file samconfig.toml
+      - name: sam deploy
+        run: >2
+          sam deploy
+          --config-file samconfig.toml
+          --stack-name ${{ vars.STACK_NAME }}
+          --role-arn ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          --s3-bucket ${{ vars.ARTIFACTS_BUCKET }}

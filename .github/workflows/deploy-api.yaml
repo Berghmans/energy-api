@@ -15,6 +15,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv requirements > requirements.txt
+        working-directory: app/energy_tariffs
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true

@@ -37,7 +37,7 @@ jobs:
         run: >2
           sam deploy
           --config-file samconfig.toml
-          --s3-bucket ${{ vars.STACK_NAME }}
-          --stack-name energy-api-prd
+          --s3-bucket ${{ vars.ARTIFACTS_BUCKET }}
+          --stack-name ${{ vars.STACK_NAME }}
           --parameter-overrides
           DomainName=energy.berghmans.it

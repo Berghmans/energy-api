@@ -29,11 +29,11 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           role-session-name: ${{ github.triggering_actor }}
           aws-region: ${{ vars.AWS_REGION }}
-      - name: sam build
+      - name: Run sam build
         run: >2
           sam build
           --config-file samconfig.toml
-      - name: sam package
+      - name: Run sam deploy
         run: >2
           sam deploy
           --config-file samconfig.toml

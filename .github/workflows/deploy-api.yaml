@@ -35,15 +35,9 @@ jobs:
           --config-file samconfig.toml
       - name: sam package
         run: >2
-          sam package
+          sam deploy
           --config-file samconfig.toml
-          --output-template-file templates/packaged.yaml
-          --s3-bucket ${{ vars.ARTIFACTS_BUCKET }}
-      - uses: aws-actions/aws-cloudformation-github-deploy@v1
-        with:
-          name: ${{ vars.STACK_NAME }}
-          template: templates/packaged.yaml
-          role-arn: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          no-fail-on-empty-changeset: "1"
-          parameter-overrides: >-
-            DomainName=energy.berghmans.it
+          --s3-bucket ${{ vars.STACK_NAME }}
+          --stack-name energy-api-prd
+          --parameter-overrides
+          DomainName=energy.berghmans.it

@@ -37,7 +37,8 @@ jobs:
         run: >2
           sam deploy
           --config-file samconfig.toml
-          --s3-bucket ${{ vars.ARTIFACTS_BUCKET }}
           --stack-name ${{ vars.STACK_NAME }}
+          --role-arn ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          --s3-bucket ${{ vars.ARTIFACTS_BUCKET }}
           --parameter-overrides
           DomainName=energy.berghmans.it

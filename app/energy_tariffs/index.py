@@ -34,26 +34,36 @@ def get_end_price(index_name: str, year: int, month: int, slope: float, intercep
     return end_price * taxes
 
 
+def extract_body(event: dict) -> dict:
+    """Extract the body from the event"""
+    if "resource" in event and event["resource"] == "/energy":
+        return json.loads(event.get("body", r"{}"))
+    else:
+        return event
+
+
 def handler(event, _context):
     """The handler"""
     print(json.dumps(event))
+    body = extract_body(event)
+
     last_month = date.today().replace(day=1) - timedelta(days=1)
-    question_type = event["TYPE"]
+    question_type = body["TYPE"]
 
     if question_type == "index":
-        req_index = event["INDEX"]
-        req_year = event.get("YEAR", last_month.year)
-        req_month = event.get("MONTH", last_month.month)
+        req_index = body["INDEX"]
+        req_year = body.get("YEAR", last_month.year)
+        req_month = body.get("MONTH", last_month.month)
 
         indexing_setting = get_indexing_setting(req_index, req_year, req_month)
         return {"statusCode": 200, "body": json.dumps(asdict(indexing_setting), default=str)}
     elif question_type == "end_price":
-        req_index = event["INDEX"]
-        req_year = event.get("YEAR", last_month.year)
-        req_month = event.get("MONTH", last_month.month)
-        intercept = event["INTERCEPT"]
-        slope = event["SLOPE"]
-        taxes = event["TAXES"]
+        req_index = body["INDEX"]
+        req_year = body.get("YEAR", last_month.year)
+        req_month = body.get("MONTH", last_month.month)
+        intercept = body["INTERCEPT"]
+        slope = body["SLOPE"]
+        taxes = body["TAXES"]
         end_price = get_end_price(req_index, req_year, req_month, slope, intercept, taxes)
         return {"statusCode": 200, "body": json.dumps({"end_price": end_price}, default=str)}
     return {"statusCode": 400}

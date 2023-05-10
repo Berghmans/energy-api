@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "API for the energy tariffs calculator"
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: The base domain name for hosting the API
+
+Globals:
+  Function:
+    AutoPublishAlias: live
+
+Resources:
+  # API Domain and DNS
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      HostedZoneConfig:
+        Comment: DNS zone for the energy API
+      Name: !Ref DomainName
+
+  ApiGwCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames:
+        - !Ref DomainName
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          ValidationDomain: !Ref DomainName
+      CertificateTransparencyLoggingPreference: "ENABLED"
+      ValidationMethod: DNS
+
+  ApiGwDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !Ref DomainName
+      RegionalCertificateArn: !Ref ApiGwCertificate
+      SecurityPolicy: "TLS_1_2"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  ApiGwDomainMapping:
+    DependsOn:
+      - LambdaEnergyTariff
+    Type: "AWS::ApiGateway::BasePathMapping"
+    Properties:
+      DomainName: !Ref ApiGwDomain
+      RestApiId: !Ref ApiGw
+      Stage: "v1"
+      BasePath: "v1"
+
+  ApiDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt ApiGwDomain.RegionalDomainName
+        HostedZoneId: !GetAtt ApiGwDomain.RegionalHostedZoneId
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref DomainName
+      Type: A
+
+  # API
+  ApiGw:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${AWS::StackName}-energy"
+      StageName: v1
+      OpenApiVersion: "2.0"
+      EndpointConfiguration:
+        Type: REGIONAL
+
+  # Energy Tariff Lambda
+  LambdaEnergyTariffRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  LambdaEnergyTariff:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Lambda that implements the energy tariff calculations"
+      Handler: "index.handler"
+      CodeUri: app/energy_tariffs
+      Runtime: python3.9
+      Timeout: 60
+      MemorySize: 128
+      Role: !GetAtt LambdaEnergyTariffRole.Arn
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /energy
+            Method: POST
+            RestApiId: !Ref ApiGw
+
+  LambdaEnergyTariffLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${LambdaEnergyTariff}"
+      RetentionInDays: 7

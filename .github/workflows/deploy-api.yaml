@@ -1,0 +1,26 @@
+---
+on:
+  workflow_run:
+    workflows: [checks]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: ${{ github.triggering_actor }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: sam build
+      - run: sam deploy --stack-name ${{ vars.STACK_NAME }} --s3-bucket ${{ vars.ARTIFACTS_BUCKET }} --s3-prefix energy --role-arn ${{ vars.AWS_DEPLOY_ROLE_ARN }}

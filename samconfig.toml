@@ -1,0 +1,11 @@
+version=0.1
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+no_confirm_changeset = true
+no_fail_on_empty_changeset = true
+tags = "Application=\"energy\""
+
+[default.build.parameters]
+no_beta_features = true
+use_container = true

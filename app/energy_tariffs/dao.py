@@ -3,8 +3,6 @@ from __future__ import annotations
 from enum import Enum, auto
 from dataclasses import dataclass, asdict
 from datetime import datetime
-from decimal import Decimal
-import json
 
 from boto3.dynamodb.conditions import Key
 
@@ -48,14 +46,14 @@ class IndexingSetting:
     def _to_ddb_json(self):
         """Convert the current object to a JSON for storing in dynamodb"""
         date_time_str = self.date.strftime("%Y-%m-%d %H:%M:%S")
-        item = json.loads(json.dumps(asdict(self)), parse_float=Decimal)
         return {
-            **item,
+            **asdict(self),
             "primary": f"{self.source}#{self.name}",
             "secondary": f"{self.timeframe.name}#{date_time_str}",
             "date": date_time_str,
             "timeframe": self.timeframe.name,
             "origin": self.origin.name,
+            "value": str(self.value),
         }
 
     @classmethod

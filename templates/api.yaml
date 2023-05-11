@@ -124,3 +124,89 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${LambdaEnergyTariff}"
       RetentionInDays: 7
+
+  # Datastore
+  IndexingSettingsTable:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "primary"
+          AttributeType: "S"
+        - AttributeName: "secondary"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "primary"
+          KeyType: "HASH"
+        - AttributeName: "secondary"
+          KeyType: "RANGE"
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: true
+
+  # Engie Feeder
+  LambdaEngieFeederRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  LambdaEngieFeederPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: logs
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Resource: !GetAtt LambdaEngieFeederLogs.Arn
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:BatchGetItem
+              - dynamodb:PutItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:ConditionCheckItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource:
+              - !GetAtt IndexingSettingsTable.Arn
+      Roles:
+        - !Ref LambdaEngieFeederRole
+
+  LambdaEngieFeeder:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Lambda that implements the energy tariff calculations"
+      Handler: "lambda_engie.handler"
+      CodeUri: app/energy_tariffs
+      Runtime: python3.9
+      Timeout: 60
+      MemorySize: 128
+      Role: !GetAtt LambdaEngieFeederRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref IndexingSettingsTable
+
+  LambdaEngieFeederLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${LambdaEngieFeeder}"
+      RetentionInDays: 7

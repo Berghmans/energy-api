@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import Enum, auto
 from dataclasses import dataclass, asdict
 from datetime import datetime
+from decimal import Decimal
 
 from boto3.dynamodb.conditions import Key
 
@@ -53,6 +54,7 @@ class IndexingSetting:
             "date": date_time_str,
             "timeframe": self.timeframe.name,
             "origin": self.origin.name,
+            "value": Decimal(self.value),
         }
 
     @classmethod
@@ -60,7 +62,7 @@ class IndexingSetting:
         """Parse the JSON from dynamodb and create the object"""
         return cls(
             name=data.get("name"),
-            value=data.get("value"),
+            value=float(data.get("value")),
             timeframe=IndexingSettingTimeframe[data.get("timeframe")],
             date=datetime.strptime(data.get("date"), "%Y-%m-%d %H:%M:%S"),
             source=data.get("source"),

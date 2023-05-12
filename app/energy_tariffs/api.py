@@ -35,9 +35,14 @@ class Api:
 
     def parse(self, event: dict) -> ApiMethod:
         """Parse the incoming event through lambda from API Gateway"""
-        if "resource" in event and event["resource"] == "/indexingsetting":
+
+        def has_value(data: dict, key: str, value: str):
+            """Check if the data has the key and given value"""
+            return key in data and data[key] == value
+
+        if has_value(event, "resource", "/indexingsetting") and has_value(event, "httpMethod", "POST"):
             return IndexingSettingApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
-        if "resource" in event and event["resource"] == "/endprice":
+        if has_value(event, "resource", "/endprice") and has_value(event, "httpMethod", "POST"):
             return EndPriceApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
 
         return None

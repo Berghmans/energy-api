@@ -18,6 +18,7 @@ class TestApi(TestCase):
         method = api.parse(
             {
                 "resource": "/indexingsetting",
+                "httpMethod": "POST",
                 "body": json.dumps(
                     {
                         "INDEX": "index1",

@@ -16,9 +16,7 @@ def get_indexing_setting(index_name: str, year: int, month: int) -> EngieIndexin
     """Get the indexing setting"""
     index_values = get_index_values()
     result = [
-        index_value
-        for index_value in index_values
-        if index_value.date.year == year and index_value.date.month == month and index_value.name == index_name
+        index_value for index_value in index_values if index_value.date.year == year and index_value.date.month == month and index_value.name == index_name
     ]
     if len(result) == 1:
         return result[0]

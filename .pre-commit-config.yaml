@@ -11,7 +11,11 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/aws-cloudformation/cfn-python-lint
-    rev: v0.72.9
+    rev: v0.77.5
     hooks:
       - id: cfn-python-lint
         files: templates/.*\.yaml$
+  - repo: https://github.com/psf/black
+    rev: "23.3.0"
+    hooks:
+      - id: black

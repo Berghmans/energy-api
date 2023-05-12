@@ -9,7 +9,7 @@ from dao import IndexingSetting
 import dao
 
 
-GAS_URL = 'https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-gas/'
+GAS_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-gas/"
 ENERGY_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-elektriciteit/"
 
 
@@ -55,11 +55,8 @@ class EngieIndexingSetting(IndexingSetting):
         date_cell = row[0]
         data_value = date_cell.select_one("span div p").text
         if "kwartaal" not in data_value:
-            month, year = data_value.replace(u'\xa0', ' ').split(" ")
-            values = [
-                EngieIndexingSetting.from_cell(month, int(year), cell)
-                for cell in row[1:]
-            ]
+            month, year = data_value.replace("\xa0", " ").split(" ")
+            values = [EngieIndexingSetting.from_cell(month, int(year), cell) for cell in row[1:]]
             return list(filter(lambda item: item is not None and item.value is not None, values))
         else:
             return []
@@ -68,7 +65,7 @@ class EngieIndexingSetting(IndexingSetting):
     def from_url(url):
         """Parse the values from URL"""
         html_text = requests.get(url).text
-        soup = BeautifulSoup(html_text, 'html.parser')
+        soup = BeautifulSoup(html_text, "html.parser")
 
         table = soup.find("div", class_="table_body")
         return [

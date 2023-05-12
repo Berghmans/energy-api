@@ -65,7 +65,7 @@ class IndexingSetting:
             timeframe=IndexingSettingTimeframe[data.get("timeframe")],
             date=datetime.strptime(data.get("date"), "%Y-%m-%d %H:%M:%S"),
             source=data.get("source"),
-            origin=IndexingSettingOrigin[data.get("origin")]
+            origin=IndexingSettingOrigin[data.get("origin")],
         )
 
     @classmethod

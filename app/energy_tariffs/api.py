@@ -65,6 +65,8 @@ class IndexingSettingApiMethod(ApiMethod):
     @classmethod
     def from_body(cls, db_table, body: dict):
         """Create the object from a HTTP request body"""
+        if "INDEX" not in body or "SOURCE" not in body:
+            return None
         last_month = date.today().replace(day=1) - timedelta(days=1)
         req_index = body["INDEX"]
         req_source = body["SOURCE"]
@@ -103,6 +105,8 @@ class EndPriceApiMethod(ApiMethod):
     @classmethod
     def from_body(cls, db_table, body: dict):
         """Create the object from a HTTP request body"""
+        if any(key not in body for key in ["INDEX", "SOURCE", "INTERCEPT", "SLOPE", "TAXES"]):
+            return None
         last_month = date.today().replace(day=1) - timedelta(days=1)
         req_index = body["INDEX"]
         req_source = body["SOURCE"]

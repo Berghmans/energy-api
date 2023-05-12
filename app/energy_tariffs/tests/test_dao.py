@@ -1,4 +1,4 @@
-"""Test module for lambda"""
+"""Test module for IndexingSetting DAO"""
 from __future__ import annotations
 from unittest import TestCase
 from datetime import datetime

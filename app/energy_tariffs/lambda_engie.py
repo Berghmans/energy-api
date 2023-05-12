@@ -1,8 +1,10 @@
 """Lambda handler for the Engie feeder"""
+from datetime import datetime, timedelta
 import os
 import logging
 
 import boto3
+
 
 from engie import EngieIndexingSetting, GAS_URL, ENERGY_URL
 
@@ -13,7 +15,9 @@ logger.setLevel(logging.INFO)
 
 def get_index_values() -> list[EngieIndexingSetting]:
     """Get the list of values"""
-    return EngieIndexingSetting.from_url(GAS_URL) + EngieIndexingSetting.from_url(ENERGY_URL)
+    not_before = datetime.now() - timedelta(days=90)
+    index_values = EngieIndexingSetting.from_url(GAS_URL) + EngieIndexingSetting.from_url(ENERGY_URL)
+    return [index_value for index_value in index_values if index_value.date > not_before]
 
 
 def handler(_event, _context):

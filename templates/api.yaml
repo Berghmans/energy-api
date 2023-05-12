@@ -204,6 +204,11 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref IndexingSettingsTable
+      Events:
+        ScheduleEvent:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(6 hours)"
 
   LambdaEngieFeederLogs:
     Type: AWS::Logs::LogGroup

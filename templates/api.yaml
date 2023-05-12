@@ -98,6 +98,13 @@ Resources:
             Action:
               - logs:CreateLogStream
               - logs:PutLogEvents
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:BatchGetItem
+              - dynamodb:Query
+            Resource:
+              - !GetAtt IndexingSettingsTable.Arn
       Roles:
         - !Ref LambdaEnergyTariffRole
 

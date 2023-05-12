@@ -3,7 +3,7 @@ import os
 
 import boto3
 
-from api import Api
+from api import Api, ApiResult
 
 
 def handler(event, _context):
@@ -13,5 +13,10 @@ def handler(event, _context):
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])
     api = Api(db_table)
     method = api.parse(event)
-    result = method.process()
-    return result.to_api()
+
+    if method is not None:
+        # Process the messages when we could parse it
+        result = method.process()
+        return result.to_api()
+
+    return ApiResult(400)

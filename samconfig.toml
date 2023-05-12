@@ -9,7 +9,7 @@ build_dir = "out"
 template = "out/template.yaml"
 capabilities = "CAPABILITY_IAM"
 no_confirm_changeset = true
-no_fail_on_empty_changeset = true
+fail_on_empty_changeset = false
 tags = "Application=\"energy\""
 
 [default.build.parameters]

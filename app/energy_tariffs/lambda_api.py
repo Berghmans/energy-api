@@ -22,8 +22,10 @@ def handler(event, _context):
 
     if method is not None:
         # Process the messages when we could parse it
+        logger.info(f"Processing the event using the {method.__class__.__name__} method")
         result = method.process()
         logger.info(f"Returning {json.dumps(result.to_api())}")
         return result.to_api()
 
+    logger.warning("Returning Bad Request as we were not able to find a suitable processing method")
     return ApiResult(400).to_api()

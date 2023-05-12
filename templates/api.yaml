@@ -105,7 +105,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: "Lambda that implements the energy tariff calculations"
-      Handler: "index.handler"
+      Handler: "lambda_api.handler"
       CodeUri: app/energy_tariffs
       Runtime: python3.9
       Timeout: 60
@@ -115,8 +115,8 @@ Resources:
         Api:
           Type: Api
           Properties:
-            Path: /energy
-            Method: POST
+            Path: /{proxy+}
+            Method: ANY
             RestApiId: !Ref ApiGw
 
   LambdaEnergyTariffLogs:

@@ -1,6 +1,7 @@
 """Main module for running the test suite"""
 import unittest
 import logging
+import sys
 
 import tests.test_dao
 
@@ -9,4 +10,5 @@ suite = unittest.TestSuite()
 # Add all tests 'manually'
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.test_dao))
 # Run the test suite
-unittest.TextTestRunner().run(suite)
+results = unittest.TextTestRunner().run(suite)
+sys.exit(not results.wasSuccessful())

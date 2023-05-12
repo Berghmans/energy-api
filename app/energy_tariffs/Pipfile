@@ -10,6 +10,7 @@ boto3 = "*"
 
 [dev-packages]
 moto = {extras = ["dynamodb"], version = "*"}
+requests-mock = "*"
 
 [requires]
 python_version = "3.9"

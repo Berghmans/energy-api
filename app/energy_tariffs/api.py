@@ -3,8 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from datetime import date, datetime, timedelta
 import json
+import logging
 
 from dao import IndexingSetting, IndexingSettingTimeframe
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class ApiMethod:
@@ -46,6 +51,7 @@ class Api:
         if has_value(event, "path", f"{self.base_path}/endprice") and has_value(event, "httpMethod", "POST"):
             return EndPriceApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
 
+        logger.warning("Unable to parse event")
         return None
 
 
@@ -71,6 +77,7 @@ class IndexingSettingApiMethod(ApiMethod):
     @classmethod
     def from_body(cls, db_table, body: dict):
         """Create the object from a HTTP request body"""
+        logger.info(f"Creating the {cls.__name__} method")
         if "INDEX" not in body or "SOURCE" not in body:
             return None
         last_month = date.today().replace(day=1) - timedelta(days=1)
@@ -111,6 +118,7 @@ class EndPriceApiMethod(ApiMethod):
     @classmethod
     def from_body(cls, db_table, body: dict):
         """Create the object from a HTTP request body"""
+        logger.info(f"Creating the {cls.__name__} method")
         if any(key not in body for key in ["INDEX", "SOURCE", "INTERCEPT", "SLOPE", "TAXES"]):
             return None
         last_month = date.today().replace(day=1) - timedelta(days=1)

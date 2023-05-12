@@ -1,9 +1,14 @@
 import json
 import os
+import logging
 
 import boto3
 
 from api import Api, ApiResult
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def handler(event, _context):
@@ -18,6 +23,7 @@ def handler(event, _context):
     if method is not None:
         # Process the messages when we could parse it
         result = method.process()
+        logger.info(f"Returning {json.dumps(result.to_api())}")
         return result.to_api()
 
     return ApiResult(400).to_api()

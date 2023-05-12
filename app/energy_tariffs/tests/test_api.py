@@ -5,7 +5,7 @@ import json
 
 from moto import mock_dynamodb
 
-from api import Api
+from api import Api, ApiResult
 
 
 @mock_dynamodb
@@ -36,3 +36,11 @@ class TestApi(TestCase):
         api = Api("", None)
         method = api.parse({"path": "/nonexisting", "body": ""})
         self.assertIsNone(method)
+
+    def test_results(self):
+        """Test ApiResult results"""
+        good = ApiResult(200, {"result": "good"})
+        bad = ApiResult(400, {"result": "bad"})
+
+        self.assertEqual({"statusCode": 200, "body": '{"result": "good"}'}, good.to_api())
+        self.assertEqual({"statusCode": 400, "body": '{"result": "bad"}'}, bad.to_api())

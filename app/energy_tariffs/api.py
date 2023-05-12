@@ -29,7 +29,7 @@ class ApiResult:
 
     def to_api(self) -> dict:
         """Transform to output for the API"""
-        return {"statusCode": 200, "body": json.dumps(self.body, default=str)}
+        return {"statusCode": self.status_code, "body": json.dumps(self.body, default=str)}
 
 
 @dataclass

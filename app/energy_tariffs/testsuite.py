@@ -2,9 +2,11 @@
 import unittest
 import logging
 import sys
+import os
 
 import tests.test_dao
 
+os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
 logging.disable(logging.CRITICAL)  # Disable logging
 suite = unittest.TestSuite()
 # Add all tests 'manually'

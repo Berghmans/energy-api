@@ -16,7 +16,7 @@ ENERGY_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/pr
 def convert_month(month: str) -> int:
     """Convert the month in a numeric value"""
     original = locale.getlocale()
-    for language in ["nl_NL", "en_US"]:
+    for language in ["nl_BE.UTF-8", "en_US.UTF-8"]:
         try:
             locale.setlocale(locale.LC_ALL, language)
             result = datetime.strptime(month, "%B").month

@@ -19,6 +19,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
+      - run: apt-get install -y language-pack-nl language-pack-en
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:

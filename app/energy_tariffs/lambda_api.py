@@ -11,7 +11,8 @@ def handler(event, _context):
     print(json.dumps(event))
     dynamodb = boto3.resource("dynamodb")
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])
-    api = Api(db_table)
+    base_path = os.environ["API_BASE_PATH"]
+    api = Api(base_path, db_table)
     method = api.parse(event)
 
     if method is not None:
@@ -19,4 +20,4 @@ def handler(event, _context):
         result = method.process()
         return result.to_api()
 
-    return ApiResult(400)
+    return ApiResult(400).to_api()

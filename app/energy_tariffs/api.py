@@ -31,6 +31,7 @@ class ApiResult:
 class Api:
     """Class for answering incoming API GW methods"""
 
+    base_path: str
     db_table: object  # Unfortunately not easy typing for boto3
 
     def parse(self, event: dict) -> ApiMethod:
@@ -40,9 +41,9 @@ class Api:
             """Check if the data has the key and given value"""
             return key in data and data[key] == value
 
-        if has_value(event, "resource", "/indexingsetting") and has_value(event, "httpMethod", "POST"):
+        if has_value(event, "path", f"{self.base_path}/indexingsetting") and has_value(event, "httpMethod", "POST"):
             return IndexingSettingApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
-        if has_value(event, "resource", "/endprice") and has_value(event, "httpMethod", "POST"):
+        if has_value(event, "path", f"{self.base_path}/endprice") and has_value(event, "httpMethod", "POST"):
             return EndPriceApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
 
         return None

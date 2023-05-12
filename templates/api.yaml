@@ -114,6 +114,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref IndexingSettingsTable
+          API_BASE_PATH: "/v1"
       Events:
         Api:
           Type: Api

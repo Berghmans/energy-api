@@ -14,10 +14,10 @@ class TestApi(TestCase):
 
     def test_existing_method(self):
         """Test an existing API method"""
-        api = Api(None)
+        api = Api("", None)
         method = api.parse(
             {
-                "resource": "/indexingsetting",
+                "path": "/indexingsetting",
                 "httpMethod": "POST",
                 "body": json.dumps(
                     {
@@ -33,6 +33,6 @@ class TestApi(TestCase):
 
     def test_non_existing_method(self):
         """Test an non-existing API method"""
-        api = Api(None)
-        method = api.parse({"resource": "/nonexisting", "body": ""})
+        api = Api("", None)
+        method = api.parse({"path": "/nonexisting", "body": ""})
         self.assertIsNone(method)

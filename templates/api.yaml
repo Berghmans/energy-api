@@ -111,6 +111,9 @@ Resources:
       Timeout: 60
       MemorySize: 128
       Role: !GetAtt LambdaEnergyTariffRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref IndexingSettingsTable
       Events:
         Api:
           Type: Api

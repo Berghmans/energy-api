@@ -16,3 +16,15 @@ jobs:
         with:
           python-version: "3.9"
       - uses: pre-commit/action@v3.0.0
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv sync --dev
+        working-directory: app/energy_tariffs
+      - run: pipenv run python testsuite.py
+        working-directory: app/energy_tariffs

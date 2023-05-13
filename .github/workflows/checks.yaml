@@ -27,5 +27,7 @@ jobs:
       - run: pip install pipenv
       - run: pipenv sync --dev
         working-directory: app/energy_tariffs
-      - run: pipenv run python testsuite.py
+      - run: pipenv run coverage run testsuite.py
+        working-directory: app/energy_tariffs
+      - run: pipenv run coverage report
         working-directory: app/energy_tariffs

@@ -1,10 +1,12 @@
+"""Module for the API lambda handler"""
 import json
 import os
 import logging
 
 import boto3
 
-from api import Api, ApiResult
+from api import Api
+from api.result import ApiResult
 
 
 logger = logging.getLogger(__name__)
@@ -13,7 +15,7 @@ logger.setLevel(logging.INFO)
 
 def handler(event, _context):
     """The handler"""
-    print(json.dumps(event))
+    logger.info(json.dumps(event))
     dynamodb = boto3.resource("dynamodb")
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])
     base_path = os.environ["API_BASE_PATH"]

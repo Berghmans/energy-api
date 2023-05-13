@@ -5,12 +5,12 @@ import requests
 from bs4 import BeautifulSoup
 import locale
 
-from dao import IndexingSetting
-import dao
+from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
 
-GAS_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-gas/"
-ENERGY_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters/indexatieparameters-elektriciteit/"
+ENGIE_PREFIX_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters"
+GAS_URL = f"{ENGIE_PREFIX_URL}/indexatieparameters-gas/"
+ENERGY_URL = f"{ENGIE_PREFIX_URL}/indexatieparameters-elektriciteit/"
 
 
 def convert_month(month: str) -> int:
@@ -41,10 +41,10 @@ class EngieIndexingSetting(IndexingSetting):
         return cls(
             name=index_name,
             value=float(value.replace(",", ".")) if value is not None and value != "" else None,
-            timeframe=dao.MONTHLY,
+            timeframe=IndexingSettingTimeframe.MONTHLY,
             date=datetime(year, convert_month(month), 1),
             source="Engie",
-            origin=dao.ORIGINAL,
+            origin=IndexingSettingOrigin.ORIGINAL,
         )
 
     @staticmethod
@@ -73,3 +73,15 @@ class EngieIndexingSetting(IndexingSetting):
             for row in table.find_all("div", class_="table_row")
             for index_value in EngieIndexingSetting.from_row(row.find_all("div", class_="table_cell"))
         ]
+
+    @staticmethod
+    def get_gas_values(date_filter: datetime = None):
+        """Scrape the GAS indexing settings from the Engie website"""
+        index_values = EngieIndexingSetting.from_url(GAS_URL)
+        return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]
+
+    @staticmethod
+    def get_energy_values(date_filter: datetime = None):
+        """Scrape the ENERGY indexing settings from the Engie website"""
+        index_values = EngieIndexingSetting.from_url(ENERGY_URL)
+        return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]

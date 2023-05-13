@@ -5,7 +5,8 @@ import json
 
 from moto import mock_dynamodb
 
-from api import Api, ApiResult
+from api import Api
+from api.result import ApiResult
 
 
 @mock_dynamodb

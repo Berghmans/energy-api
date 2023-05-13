@@ -1,3 +1,4 @@
+"""Module for the API lambda handler"""
 import json
 import os
 import logging

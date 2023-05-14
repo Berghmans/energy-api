@@ -7,11 +7,13 @@ name = "pypi"
 beautifulsoup4 = "*"
 requests = "*"
 boto3 = "*"
+entsoe-py = "*"
 
 [dev-packages]
 moto = {extras = ["dynamodb"], version = "*"}
 requests-mock = "*"
 coverage = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.9"

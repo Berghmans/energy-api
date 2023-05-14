@@ -3,3 +3,4 @@ Engie.xlsx
 day_ahead_2023.xml
 app/energy_tariffs/test.py
 app/energy_tariffs/.python-version
+app/energy_tariffs/.env

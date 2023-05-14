@@ -6,7 +6,7 @@ import logging
 import boto3
 
 
-from engie import EngieIndexingSetting
+from feeders.engie import EngieIndexingSetting
 
 
 logger = logging.getLogger(__name__)

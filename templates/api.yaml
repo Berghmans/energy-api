@@ -205,7 +205,7 @@ Resources:
   LambdaEngieFeeder:
     Type: AWS::Serverless::Function
     Properties:
-      Description: "Lambda that implements the energy tariff calculations"
+      Description: "Lambda that feeds engie indexes"
       Handler: "lambda_engie.handler"
       CodeUri: app/energy_tariffs
       Runtime: python3.9
@@ -225,4 +225,71 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${LambdaEngieFeeder}"
+      RetentionInDays: 7
+
+  # EEX Feeder
+  LambdaEEXFeederRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  LambdaEEXFeederPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: logs
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Resource: !GetAtt LambdaEEXFeederLogs.Arn
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:BatchGetItem
+              - dynamodb:PutItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:ConditionCheckItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource:
+              - !GetAtt IndexingSettingsTable.Arn
+      Roles:
+        - !Ref LambdaEEXFeederRole
+
+  LambdaEEXFeeder:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Lambda that feeds EEX indexes"
+      Handler: "lambda_eex.handler"
+      CodeUri: app/energy_tariffs
+      Runtime: python3.9
+      Timeout: 60
+      MemorySize: 128
+      Role: !GetAtt LambdaEEXFeederRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref IndexingSettingsTable
+      Events:
+        ScheduleEvent:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(1 day)"
+
+  LambdaEEXFeederLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${LambdaEEXFeeder}"
       RetentionInDays: 7

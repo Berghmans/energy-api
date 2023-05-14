@@ -29,7 +29,12 @@ class IndexingSettingApiMethod(ApiMethod):
         )
 
         if indexing_setting is not None:
-            return ApiResult(200, asdict(indexing_setting))
+
+            def translate_index(index: IndexingSetting) -> dict:
+                """Translate the index to output"""
+                return {**asdict(index), "timeframe": index.timeframe.name, "origin": index.origin.name}  # Use the name for enum  # Use the name for enum
+
+            return ApiResult(200, translate_index(indexing_setting))
         return ApiResult(400)
 
     @classmethod

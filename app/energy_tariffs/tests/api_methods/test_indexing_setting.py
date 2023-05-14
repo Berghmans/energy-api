@@ -65,7 +65,8 @@ class TestIndexingSettingApiMethod(TestCase):
         )
         result = method.process()
         self.assertEqual(200, result.status_code)
-        self.assertEqual(asdict(self.index_obj), result.body)
+        expected = {**asdict(self.index_obj), "timeframe": self.index_timeframe.name, "origin": self.index_origin.name}
+        self.assertEqual(expected, result.body)
 
     def test_process_not_existing(self):
         """Test the process method for a not existing indexingsetting"""

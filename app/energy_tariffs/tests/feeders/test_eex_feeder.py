@@ -1,7 +1,7 @@
 """Test module for lambda"""
 from __future__ import annotations
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, call
 from pathlib import Path
 from datetime import date
 import os
@@ -74,3 +74,7 @@ class TestLambdaHandlerEngie(TestCase):
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})
             self.assertEqual(1, len(self.db_table.scan().get("Items", [])))
+
+        with patch("feeders.eex.EEXIndexingSetting.get_ztp_values", return_value=self.gas_indexes) as mock:
+            handler({"start": "2023/04/01", "end": "2023/04/30"}, {})
+            self.assertEqual([call(date_filter=date(2023, 4, 1), end=date(2023, 4, 30))], mock.mock_calls)

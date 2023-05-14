@@ -76,6 +76,6 @@ class EEXIndexingSetting(IndexingSetting):
         ]
 
     @staticmethod
-    def get_ztp_values(date_filter: date):
+    def get_ztp_values(date_filter: date, end: date = None):
         """Get the ZTP indexes since given datefilter"""
-        return EEXIndexingSetting.query(indexes=["#E.ZTP_GTND", "#E.ZTP_GTWE"], start=date_filter, end=date.today())
+        return EEXIndexingSetting.query(indexes=["#E.ZTP_GTND", "#E.ZTP_GTWE"], start=date_filter, end=date.today() if end is None else end)

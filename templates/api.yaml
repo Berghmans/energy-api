@@ -340,6 +340,11 @@ Resources:
               - dynamodb:DeleteItem
             Resource:
               - !GetAtt IndexingSettingsTable.Arn
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Ref Secrets
       Roles:
         - !Ref LambdaEntsoeFeederRole
 
@@ -358,6 +363,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref IndexingSettingsTable
+          SECRET_ARN: !Ref Secrets
       Events:
         ScheduleEvent:
           Type: ScheduleV2

@@ -9,7 +9,7 @@ import os
 import requests_mock
 from moto import mock_dynamodb
 
-from engie import EngieIndexingSetting, GAS_URL, ENERGY_URL
+from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL
 from dao import IndexingSettingOrigin, IndexingSettingTimeframe
 from lambda_engie import handler
 from tests.creators import create_dynamodb_table
@@ -98,8 +98,8 @@ class TestLambdaHandlerEngie(TestCase):
         """Test the lambda handler"""
         # Path these methods so they return a fixed result, as the lambda handler is "moving"
         # and otherwise we would have no consistent results the coming months
-        with patch("engie.EngieIndexingSetting.get_gas_values", return_value=self.gas_indexes), patch(
-            "engie.EngieIndexingSetting.get_energy_values", return_value=self.energy_indexes
+        with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=self.gas_indexes), patch(
+            "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=self.energy_indexes
         ):
             os.environ["TABLE_NAME"] = self.db_table.name
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))

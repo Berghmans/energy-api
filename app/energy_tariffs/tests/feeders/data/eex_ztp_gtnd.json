@@ -1,0 +1,156 @@
+{
+    "results": {
+        "items": [
+            {
+                "ontradeprice": 50.725,
+                "close": 51.829,
+                "tradedatetimegmt": "4/3/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 45.5,
+                "close": 46.519,
+                "tradedatetimegmt": "4/4/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 45.8,
+                "close": 45.348,
+                "tradedatetimegmt": "4/5/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 42.6,
+                "close": 42.944,
+                "tradedatetimegmt": "4/6/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 44.15,
+                "close": null,
+                "tradedatetimegmt": "4/7/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 40.25,
+                "close": null,
+                "tradedatetimegmt": "4/10/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 43.525,
+                "close": 43.594,
+                "tradedatetimegmt": "4/11/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 44,
+                "close": 44.031,
+                "tradedatetimegmt": "4/12/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 42.5,
+                "close": 42.93,
+                "tradedatetimegmt": "4/13/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 42.65,
+                "close": 40.895,
+                "tradedatetimegmt": "4/14/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 40.8,
+                "close": 41.018,
+                "tradedatetimegmt": "4/17/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 41.7,
+                "close": 41.856,
+                "tradedatetimegmt": "4/18/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 40.825,
+                "close": 38.899,
+                "tradedatetimegmt": "4/19/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 39.75,
+                "close": 39.008,
+                "tradedatetimegmt": "4/20/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 39.65,
+                "close": 38.89,
+                "tradedatetimegmt": "4/21/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 38.4,
+                "close": 38.662,
+                "tradedatetimegmt": "4/24/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 39,
+                "close": 38.865,
+                "tradedatetimegmt": "4/25/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 36.45,
+                "close": 36.74,
+                "tradedatetimegmt": "4/26/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 37.275,
+                "close": 36.191,
+                "tradedatetimegmt": "4/27/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 36.525,
+                "close": 36.369,
+                "tradedatetimegmt": "4/28/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 37,
+                "close": null,
+                "tradedatetimegmt": "5/1/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 35.325,
+                "close": 35.168,
+                "tradedatetimegmt": "5/2/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 34.825,
+                "close": 34.612,
+                "tradedatetimegmt": "5/3/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 34.775,
+                "close": 33.921,
+                "tradedatetimegmt": "5/4/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 35.9,
+                "close": 34.897,
+                "tradedatetimegmt": "5/5/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 36,
+                "close": null,
+                "tradedatetimegmt": "5/8/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 36.9,
+                "close": 34.731,
+                "tradedatetimegmt": "5/9/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 34,
+                "close": 34.113,
+                "tradedatetimegmt": "5/10/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 34,
+                "close": 33.989,
+                "tradedatetimegmt": "5/11/2023 12:00:00 PM"
+            },
+            {
+                "ontradeprice": 31.85,
+                "close": 30.606,
+                "tradedatetimegmt": "5/12/2023 12:00:00 PM"
+            }
+        ]
+    }
+}

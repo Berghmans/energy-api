@@ -64,7 +64,12 @@ class EEXIndexingSetting(IndexingSetting):
             response.raise_for_status()
             return [EEXIndexingSetting.from_eex_json(index, item) for item in response.json().get("results", {}).get("items", [])]
 
-        return [result for index in indexes for result in sub_query(session=session, index=index, start=start, end=end) if result.value is not None]
+        return [
+            result
+            for index in indexes
+            for result in sub_query(session=session, index=index, start=start, end=end)
+            if result.value is not None and result.date.date() >= start and result.date.date() <= end
+        ]
 
     @staticmethod
     def get_ztp_values(date_filter: date):

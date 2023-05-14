@@ -160,6 +160,13 @@ Resources:
         AttributeName: "ttl"
         Enabled: true
 
+  # Config
+  Secrets:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: This secret has a values necessary for the application
+      SecretString: '{"ENTSOE_KEY":"changme"}'
+
   # Engie Feeder
   LambdaEngieFeederRole:
     Type: AWS::IAM::Role

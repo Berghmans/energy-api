@@ -1,4 +1,8 @@
-"""Module for getting EEX Spot Prices"""
+"""
+Module for getting EEX Spot Prices
+
+https://www.eex.com/en/market-data/natural-gas/spot
+"""
 from dataclasses import dataclass
 from datetime import datetime, date
 

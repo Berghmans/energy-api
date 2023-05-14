@@ -1,9 +1,11 @@
 """Module for getting ENTSO-E SDAC prices (Single Day Ahead Coupling price)"""
 from dataclasses import dataclass
 from datetime import date, timedelta
+import json
 
 from pandas import Timestamp
 from entsoe import EntsoePandasClient
+import boto3
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -38,3 +40,11 @@ class EntsoeIndexingSetting(IndexingSetting):
         return EntsoeIndexingSetting.query(
             api_key=api_key, country_code="BE", start=date_filter, end=(date.today() if end is None else end) + timedelta(days=1)
         )
+
+    @staticmethod
+    def fetch_api_key(secret_arn: str) -> str:
+        """Fetch the API key from AWS"""
+        client = boto3.client("secretsmanager")
+        response = client.get_secret_value(SecretId=secret_arn)
+        value = json.loads(response["SecretString"])
+        return value["ENTSOE_KEY"]

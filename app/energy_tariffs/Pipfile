@@ -10,10 +10,10 @@ boto3 = "*"
 entsoe-py = "*"
 
 [dev-packages]
-moto = {extras = ["dynamodb"], version = "*"}
 requests-mock = "*"
 coverage = "*"
 pandas = "*"
+moto = {extras = ["dynamodb", "secretsmanager"], version = "*"}
 
 [requires]
 python_version = "3.9"

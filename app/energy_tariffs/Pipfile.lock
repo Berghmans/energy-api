@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3f2defb85feb7bc58918fa5fa11ab7bd2bbc4e27a5b5834e42f91afc0a8fdc10"
+            "sha256": "a3ed9795e4dccac531c711655d25ecf362d1006480a61699a42127ce89fe2bc1"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -628,7 +628,8 @@
         },
         "moto": {
             "extras": [
-                "dynamodb"
+                "dynamodb",
+                "secretsmanager"
             ],
             "hashes": [
                 "sha256:d4bb629686b8b92e480f9784316bd0f379b148a5caee7c07aecbde6033a885e1",

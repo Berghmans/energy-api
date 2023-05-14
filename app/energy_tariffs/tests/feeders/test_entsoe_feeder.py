@@ -8,11 +8,11 @@ from statistics import mean
 import os
 
 import pandas
-from moto import mock_dynamodb
+from moto import mock_dynamodb, mock_secretsmanager
 
 from feeders.entsoe import EntsoeIndexingSetting
 from lambda_entsoe import handler
-from tests.creators import create_dynamodb_table
+from tests.creators import create_dynamodb_table, create_secrets
 
 
 def read_entsoe_values(file_name: str) -> pandas.Series:
@@ -38,12 +38,14 @@ class TestEEXIndexingSetting(TestCase):
 
 
 @mock_dynamodb
+@mock_secretsmanager
 class TestLambdaHandlerEntsoe(TestCase):
     """Test class for lambda entsoe feeder handler"""
 
     def setUp(self):
         """Set up the test"""
         self.db_table = create_dynamodb_table()
+        self.secret = create_secrets()
 
     def test_handler(self):
         """Test the lambda handler"""
@@ -52,7 +54,7 @@ class TestLambdaHandlerEntsoe(TestCase):
         series = read_entsoe_values("entsoe_be.csv")
         with patch("feeders.entsoe.EntsoePandasClient.query_day_ahead_prices", return_value=series):
             os.environ["TABLE_NAME"] = self.db_table.name
-            os.environ["ENTSOE_KEY"] = "fakekey"
+            os.environ["SECRET_ARN"] = self.secret["ARN"]
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})
             self.assertEqual(721, len(self.db_table.scan().get("Items", [])))

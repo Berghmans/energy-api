@@ -21,7 +21,8 @@ def handler(event, _context):
     else:
         not_before = date.today() - timedelta(days=7)
         not_after = None
-    index_values = EntsoeIndexingSetting.get_be_values(api_key=os.environ["ENTSOE_KEY"], date_filter=not_before, end=not_after)
+    api_key = EntsoeIndexingSetting.fetch_api_key(os.environ["SECRET_ARN"])
+    index_values = EntsoeIndexingSetting.get_be_values(api_key=api_key, date_filter=not_before, end=not_after)
     dynamodb = boto3.resource("dynamodb")
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])
     logger.info(f"Sending {len(index_values)} indexing settings to the database")

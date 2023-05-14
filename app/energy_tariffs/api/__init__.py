@@ -5,7 +5,7 @@ import json
 import logging
 
 from api.method import ApiMethod
-from api.methods import IndexingSettingApiMethod, IndexingSettingsApiMethod, EndPriceApiMethod
+from api.methods import IndexingSettingApiMethod, IndexingSettingsApiMethod, EndPriceApiMethod, EndPricesApiMethod
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,8 @@ class Api:
             return IndexingSettingsApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
         if has_value(event, "path", f"{self.base_path}/endprice") and has_value(event, "httpMethod", "POST"):
             return EndPriceApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
+        if has_value(event, "path", f"{self.base_path}/endprices") and has_value(event, "httpMethod", "POST"):
+            return EndPricesApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
 
         logger.warning("Unable to parse event")
         return None

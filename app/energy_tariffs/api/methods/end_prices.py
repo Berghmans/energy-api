@@ -1,11 +1,11 @@
-"""Module for the indexing settings method - The same as indexing setting but for multiple at once"""
+"""Module for the end prices method - The same as indexing setting but for multiple at once"""
 from dataclasses import dataclass
 from itertools import islice
 import logging
 import json
 
 from api.method import ApiMethod
-from api.methods.indexing_setting import IndexingSettingApiMethod
+from api.methods.end_price import EndPriceApiMethod
 from api.result import ApiResult
 
 
@@ -14,10 +14,10 @@ logger.setLevel(logging.INFO)
 
 
 @dataclass
-class IndexingSettingsApiMethod(ApiMethod):
-    """Method for /indexingsettings"""
+class EndPricesApiMethod(ApiMethod):
+    """Method for /endprices"""
 
-    indexes: dict[str, IndexingSettingApiMethod]
+    indexes: dict[str, EndPriceApiMethod]
 
     def process(self) -> ApiResult:
         results = {key: request.process() for key, request in self.indexes.items()}
@@ -31,7 +31,7 @@ class IndexingSettingsApiMethod(ApiMethod):
     def from_body(cls, db_table, body: dict):
         """Create the object from a HTTP request body"""
         logger.info(f"Creating the {cls.__name__} method for body {json.dumps(body)}")
-        index_requests = {key: IndexingSettingApiMethod.from_body(db_table, index_request) for key, index_request in body.items()}
+        index_requests = {key: EndPriceApiMethod.from_body(db_table, index_request) for key, index_request in body.items()}
 
         if any(request is None for request in index_requests.values()):
             logger.info("One of the requests was not falid")

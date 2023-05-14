@@ -10,6 +10,7 @@ import tests.test_api
 import tests.api_methods.test_indexing_setting
 import tests.api_methods.test_indexing_settings
 import tests.api_methods.test_end_price
+import tests.api_methods.test_end_prices
 
 os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
 logging.disable(logging.CRITICAL)  # Disable logging
@@ -21,6 +22,7 @@ suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.test_api))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_indexing_setting))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_indexing_settings))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_end_price))
+suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_end_prices))
 # Run the test suite
 results = unittest.TextTestRunner().run(suite)
 sys.exit(not results.wasSuccessful())

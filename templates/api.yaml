@@ -219,7 +219,7 @@ Resources:
         ScheduleEvent:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: "rate(6 hours)"
+            ScheduleExpression: "rate(12 hours)"
 
   LambdaEngieFeederLogs:
     Type: AWS::Logs::LogGroup
@@ -292,4 +292,73 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${LambdaEEXFeeder}"
+      RetentionInDays: 7
+
+  # ENTSO-E Feeder
+  LambdaEntsoeFeederRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  LambdaEntsoeFeederPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: logs
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Resource: !GetAtt LambdaEntsoeFeederLogs.Arn
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:BatchGetItem
+              - dynamodb:PutItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:ConditionCheckItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource:
+              - !GetAtt IndexingSettingsTable.Arn
+      Roles:
+        - !Ref LambdaEntsoeFeederRole
+
+  LambdaEntsoeFeeder:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "Lambda that feeds ENTSO-E indexes"
+      Handler: "lambda_entsoe.handler"
+      CodeUri: app/energy_tariffs
+      Runtime: python3.9
+      Timeout: 60
+      MemorySize: 128
+      Role: !GetAtt LambdaEntsoeFeederRole.Arn
+      Layers:
+        - arn:aws:lambda:eu-west-1:336392948345:layer:AWSSDKPandas-Python39:6
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref IndexingSettingsTable
+      Events:
+        ScheduleEvent:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(12 hours)"
+
+  LambdaEntsoeFeederLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${LambdaEntsoeFeeder}"
       RetentionInDays: 7

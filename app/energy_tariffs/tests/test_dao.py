@@ -1,7 +1,7 @@
 """Test module for IndexingSetting DAO"""
 from __future__ import annotations
 from unittest import TestCase
-from datetime import datetime
+from datetime import datetime, date
 
 from moto import mock_dynamodb
 
@@ -37,13 +37,14 @@ class TestIndexingSetting(TestCase):
         self.index_obj.save(self.db_table)
         response = self.db_table.get_item(
             Key={
-                "primary": f"{self.index_source}#{self.index_name}",
+                "primary": f"{self.index_source}#ORIGINAL#{self.index_name}",
                 "secondary": f"{self.index_timeframe.name}#{self.index_datetime_str}",
             }
         )
         self.assertIn("Item", response)
         self.assertIn("primary", response["Item"])
         self.assertIn("secondary", response["Item"])
+        self.assertIn("last_updated", response["Item"])
         self.assertEqual("1.1", response["Item"]["value"])
 
     def test_load(self):
@@ -95,3 +96,39 @@ class TestIndexingSetting(TestCase):
         ).save(self.db_table)
         objects = IndexingSetting.query(self.db_table, self.index_source, self.index_name)
         self.assertEqual(2, len(objects))
+
+    def test_query_timeframe(self):
+        """Test the query method"""
+        for i in range(0, 5):
+            IndexingSetting(
+                self.index_name,
+                self.index_value,
+                self.index_timeframe,
+                datetime(2023, 1 + i, 1, 0, 0, 0),
+                self.index_source,
+                self.index_origin,
+            ).save(self.db_table)
+        objects = IndexingSetting.query(self.db_table, self.index_source, self.index_name, timeframe=self.index_timeframe)
+        self.assertEqual(5, len(objects))
+
+    def test_query_timeframe_dateprefix(self):
+        """Test the query method"""
+        for i in range(0, 5):
+            IndexingSetting(
+                self.index_name,
+                self.index_value,
+                self.index_timeframe,
+                datetime(2023, 1 + i, 1, 0, 0, 0),
+                self.index_source,
+                self.index_origin,
+            ).save(self.db_table)
+        objects = IndexingSetting.query(self.db_table, self.index_source, self.index_name, timeframe=self.index_timeframe, date_time_prefix="2023-01")
+        self.assertEqual(1, len(objects))
+        objects = IndexingSetting.query(
+            self.db_table, self.index_source, self.index_name, timeframe=self.index_timeframe, date_time_prefix=date(2023, 1, 1).strftime("%Y-%m")
+        )
+        self.assertEqual(1, len(objects))
+
+    def test_query_invalid(self):
+        """Test the query method"""
+        self.assertRaises(ValueError, IndexingSetting.query, self.db_table, self.index_source, self.index_name, date_time_prefix="2023-01")

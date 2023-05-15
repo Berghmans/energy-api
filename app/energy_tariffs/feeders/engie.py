@@ -1,13 +1,18 @@
 """Module for retrieving the indexation parameters from Engie"""
 from dataclasses import dataclass
-from datetime import datetime
-import requests
-from bs4 import BeautifulSoup
+from datetime import datetime, date, timedelta
+from statistics import mean
 import locale
+import logging
+
+from bs4 import BeautifulSoup
+import requests
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 ENGIE_PREFIX_URL = "https://www.engie.be/nl/professionals/energie/elektriciteit-gas/prijzen-voorwaarden/indexatieparameters"
 GAS_URL = f"{ENGIE_PREFIX_URL}/indexatieparameters-gas/"
 ENERGY_URL = f"{ENGIE_PREFIX_URL}/indexatieparameters-elektriciteit/"
@@ -85,3 +90,41 @@ class EngieIndexingSetting(IndexingSetting):
         """Scrape the ENERGY indexing settings from the Engie website"""
         index_values = EngieIndexingSetting.from_url(ENERGY_URL)
         return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]
+
+    @staticmethod
+    def calculate_derived_values(db_table, calculation_date: date = None) -> list[IndexingSetting]:
+        """Calculate a list of derived indexing settings"""
+        indexes = []
+        if calculation_date is None:
+            calculation_date = date.today()
+
+        # EPEX DAM
+        # De indexatieparameter is het rekenkundig gemiddelde van de dagelijkse quoteringen Day Ahead EPEX SPOT Belgium
+        # (hierna EPEX DAM) tijdens de maand van levering. De dagelijkse quoteringen EPEX DAM worden uitgedrukt in €/MWh.
+        # De waarde van EPEX DAM van de lopende maand zal pas gekend zijn aan het einde van de maand.
+        tomorrow = calculation_date + timedelta(days=1)
+        if tomorrow.month > calculation_date.month:
+            # Tomorrow is a now month so calculate the values for EPEX DAM
+            logger.info("Calculating values for EPEX DAM")
+            index_values_month = IndexingSetting.query(
+                db_table=db_table,
+                source="ENTSO-E",
+                name="SDAC BE",
+                timeframe=IndexingSettingTimeframe.HOURLY,
+                date_time_prefix=calculation_date.strftime("%Y-%m"),
+            )
+            if len(index_values_month) > 0:
+                # Only calculate if we found results
+                value = round(mean(index.value for index in index_values_month), 2)
+                epex_dam = EngieIndexingSetting(
+                    name="Epex DAM",
+                    value=value,
+                    timeframe=IndexingSettingTimeframe.MONTHLY,
+                    date=datetime(tomorrow.year, tomorrow.month, 1),
+                    source="Engie",
+                    origin=IndexingSettingOrigin.DERIVED,
+                )
+                logger.info(f"EPEX DAM: {value} (records: {len(index_values_month)})")
+                indexes.append(epex_dam)
+
+        return indexes

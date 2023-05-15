@@ -48,12 +48,13 @@ class IndexingSetting:
         date_time_str = self.date.strftime("%Y-%m-%d %H:%M:%S")
         return {
             **asdict(self),
-            "primary": f"{self.source}#{self.name}",
+            "primary": f"{self.source}#{self.origin.name}#{self.name}",
             "secondary": f"{self.timeframe.name}#{date_time_str}",
             "date": date_time_str,
             "timeframe": self.timeframe.name,
             "origin": self.origin.name,
             "value": str(self.value),
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
 
     @classmethod
@@ -69,20 +70,43 @@ class IndexingSetting:
         )
 
     @classmethod
-    def load(cls, db_table, source: str, name: str, timeframe: IndexingSettingTimeframe, date_time: datetime):
+    def load(
+        cls,
+        db_table,
+        source: str,
+        name: str,
+        timeframe: IndexingSettingTimeframe,
+        date_time: datetime,
+        origin: IndexingSettingOrigin = IndexingSettingOrigin.ORIGINAL,
+    ):
         """Retrieve a single object from the database"""
         date_time_str = date_time.strftime("%Y-%m-%d %H:%M:%S")
-        response = db_table.get_item(Key={"primary": f"{source}#{name}", "secondary": f"{timeframe.name}#{date_time_str}"})
+        response = db_table.get_item(Key={"primary": f"{source}#{origin.name}#{name}", "secondary": f"{timeframe.name}#{date_time_str}"})
 
         if "Item" in response:
             return cls._from_ddb_json(response["Item"])
 
     @staticmethod
-    def query(db_table, source: str, name: str) -> list[IndexingSetting]:
+    def query(
+        db_table,
+        source: str,
+        name: str,
+        timeframe: IndexingSettingTimeframe = None,
+        date_time_prefix: str = None,
+        origin: IndexingSettingOrigin = IndexingSettingOrigin.ORIGINAL,
+    ) -> list[IndexingSetting]:
         """Query all objects in the database from the same campaign"""
+        key_condition = Key("primary").eq(f"{source}#{origin.name}#{name}")
+        if timeframe is not None and date_time_prefix is not None:
+            key_condition = key_condition & Key("secondary").begins_with(f"{timeframe.name}#{date_time_prefix}")
+        elif timeframe is not None and date_time_prefix is None:
+            key_condition = key_condition & Key("secondary").begins_with(f"{timeframe.name}")
+        elif timeframe is None and date_time_prefix is not None:
+            raise ValueError("Cannot query for date time prefix without timeframe")
+
         response = db_table.query(
             Select="ALL_ATTRIBUTES",
-            KeyConditionExpression=Key("primary").eq(f"{source}#{name}"),
+            KeyConditionExpression=key_condition,
         )
         return [IndexingSetting._from_ddb_json(object) for object in response.get("Items", [])]
 

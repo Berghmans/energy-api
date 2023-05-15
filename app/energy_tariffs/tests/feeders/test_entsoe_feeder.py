@@ -12,7 +12,7 @@ import requests_mock
 
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
 from dao import IndexingSettingOrigin, IndexingSettingTimeframe
-from lambda_entsoe import handler
+from lambda_feeder import entsoe_handler as handler
 from tests.creators import create_dynamodb_table, create_secrets
 
 

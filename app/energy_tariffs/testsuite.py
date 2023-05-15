@@ -9,6 +9,7 @@ import tests.feeders.test_engie_feeder
 import tests.feeders.test_eex_feeder
 import tests.feeders.test_entsoe_feeder
 import tests.test_api
+import tests.test_feeder
 import tests.api_methods.test_indexing_setting
 import tests.api_methods.test_indexing_settings
 import tests.api_methods.test_end_price
@@ -20,6 +21,7 @@ suite = unittest.TestSuite()
 # Add all tests 'manually'
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.test_dao))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.test_api))
+suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.test_feeder))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_engie_feeder))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_eex_feeder))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_entsoe_feeder))

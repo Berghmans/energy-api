@@ -7,12 +7,12 @@ name = "pypi"
 beautifulsoup4 = "*"
 requests = "*"
 boto3 = "*"
-entsoe-py = "*"
+pytz = "*"
+lxml = "*"
 
 [dev-packages]
 requests-mock = "*"
 coverage = "*"
-pandas = "*"
 moto = {extras = ["dynamodb", "secretsmanager"], version = "*"}
 
 [requires]

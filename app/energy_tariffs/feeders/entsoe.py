@@ -1,45 +1,84 @@
 """Module for getting ENTSO-E SDAC prices (Single Day Ahead Coupling price)"""
+from __future__ import annotations
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from bs4 import BeautifulSoup
+from bs4.element import Tag
+from pathlib import Path
 import json
 
-from pandas import Timestamp
-from entsoe import EntsoePandasClient
+import requests
 import boto3
+import pytz
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
+
+
+ENTSOE_URL = "https://web-api.tp.entsoe.eu/api"
+BE_TZ = pytz.timezone("Europe/Brussels")
 
 
 @dataclass
 class EntsoeIndexingSetting(IndexingSetting):
     """Single Day Ahead Coupling price of ENTSO-E"""
 
+    @staticmethod
+    def lookup_area_code(country_code: str) -> str:
+        if country_code == "BE":
+            return "10YBE----------2"
+        raise NotImplementedError(f"Did not find area code for given country code {country_code}")
+
     @classmethod
-    def from_entsoe_data(cls, index_name: str, date_time: Timestamp, value: float):
+    def from_entsoe_data(cls, index_name: str, date_time: datetime, value: float):
         """Parse from the ENTSOE data"""
         return cls(
             name=index_name,
             value=value,
             timeframe=IndexingSettingTimeframe.HOURLY,
-            date=date_time.to_pydatetime().replace(tzinfo=None, minute=0, second=0),
+            date=date_time.replace(tzinfo=None, minute=0, second=0),
             source="ENTSO-E",
             origin=IndexingSettingOrigin.ORIGINAL,
         )
 
     @staticmethod
+    def iterate_timeseries(xml: str):
+        """Iterate over all timeseries in the XML"""
+        soup = BeautifulSoup(xml, features="xml")
+        for timeseries in soup.find_all("TimeSeries"):
+            yield EntsoeTimeSeries.from_xml(timeseries)
+
+    @staticmethod
     def query(api_key: str, country_code: str, start: date, end: date):
         """Query"""
-        client = EntsoePandasClient(api_key=api_key)
-        sdac_prices = client.query_day_ahead_prices(country_code, start=Timestamp(start, tz="Europe/Brussels"), end=Timestamp(end, tz="Europe/Brussels"))
+        area = EntsoeIndexingSetting.lookup_area_code(country_code=country_code)
+        params = {
+            "documentType": "A44",
+            "in_Domain": area,
+            "out_Domain": area,
+            "securityToken": api_key,
+            "periodStart": start.strftime("%Y%m%d%H00"),
+            "periodEnd": end.strftime("%Y%m%d%H00"),
+        }
 
-        return [EntsoeIndexingSetting.from_entsoe_data(f"SDAC {country_code}", timestamp, value) for timestamp, value in sdac_prices.to_dict().items()]
+        response = requests.get(url=ENTSOE_URL, params=params)
+        response.raise_for_status()
+        if response.headers.get("content-type", "") == "application/xml" and "No matching data found" in response.text:
+            raise ValueError("Not expecting no data")
+
+        with Path("tmp.xml").open(mode="w", encoding="utf-8") as file_handle:
+            file_handle.write(response.text)
+
+        return [
+            EntsoeIndexingSetting.from_entsoe_data(f"SDAC {country_code}", timestamp, value)
+            for timeserie in EntsoeIndexingSetting.iterate_timeseries(response.text)
+            for timestamp, value in timeserie.to_period().items()
+            if timestamp.date() >= start and timestamp.date() <= end
+        ]
 
     @staticmethod
     def get_be_values(api_key: str, date_filter: date, end: date = None):
         """Get the Belgium SDAC"""
-        return EntsoeIndexingSetting.query(
-            api_key=api_key, country_code="BE", start=date_filter, end=(date.today() if end is None else end) + timedelta(days=1)
-        )
+        return EntsoeIndexingSetting.query(api_key=api_key, country_code="BE", start=date_filter, end=(date.today() if end is None else end))
 
     @staticmethod
     def fetch_api_key(secret_arn: str) -> str:
@@ -48,3 +87,35 @@ class EntsoeIndexingSetting(IndexingSetting):
         response = client.get_secret_value(SecretId=secret_arn)
         value = json.loads(response["SecretString"])
         return value["ENTSOE_KEY"]
+
+
+@dataclass
+class EntsoeTimeSeries:
+    """Class for a time series"""
+
+    currency: str
+    measure_unit: str
+    start_time: datetime
+    end_time: datetime
+    resolution: str
+    period: list[float]
+
+    @classmethod
+    def from_xml(cls, xml: Tag):
+        """Parse the xml"""
+        currency = xml.find("currency_Unit.name").text
+        measure_unit = xml.find("price_Measure_Unit.name").text
+        period = xml.find("Period")
+        time_interval = period.find("timeInterval")
+        start_time = time_interval.find("start").text
+        end_time = time_interval.find("end").text
+        resolution = period.find("resolution").text
+        values_map = {int(point.find("position").text): float(point.find("price.amount").text) for point in period.find_all("Point")}
+        values = [values_map[key] for key in sorted(values_map.keys(), reverse=False)]
+        start_datetime = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+        end_datetime = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
+        return cls(currency=currency, measure_unit=measure_unit, start_time=start_datetime, end_time=end_datetime, resolution=resolution, period=values)
+
+    def to_period(self) -> dict[datetime, float]:
+        start_time = self.start_time.astimezone(BE_TZ)
+        return {start_time + timedelta(hours=i): value for i, value in enumerate(self.period)}

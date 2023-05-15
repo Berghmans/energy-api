@@ -8,6 +8,7 @@ import os
 from moto import mock_dynamodb
 
 from api import Api
+from api.method import ApiMethod
 from api.result import ApiResult
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 from lambda_api import handler
@@ -30,17 +31,16 @@ class TestApi(TestCase):
             "src",
             IndexingSettingOrigin.ORIGINAL,
         ).save(self.db_table)
+        self.valid_body = {
+            "INDEX": "index1",
+            "SOURCE": "src",
+            "YEAR": 2023,
+            "MONTH": 5,
+        }
         self.valid_request = {
             "path": f"{self.base_path}/indexingsetting",
             "httpMethod": "POST",
-            "body": json.dumps(
-                {
-                    "INDEX": "index1",
-                    "SOURCE": "src",
-                    "YEAR": 2023,
-                    "MONTH": 5,
-                }
-            ),
+            "body": json.dumps(self.valid_body),
         }
         self.invalid_request = {"path": "/nonexisting", "body": ""}
 
@@ -50,12 +50,31 @@ class TestApi(TestCase):
         os.environ["API_BASE_PATH"] = self.base_path
         result = handler(self.valid_request, {})
         self.assertEqual(200, result["statusCode"])
+        result = handler({**self.valid_request, "path": f"{self.base_path}/notexisting"}, {})
+        self.assertEqual(400, result["statusCode"])
+
+    def test_not_implemented_method(self):
+        """Test an existing API method"""
+        method = ApiMethod()
+        self.assertRaises(NotImplementedError, method.process)
 
     def test_existing_method(self):
         """Test an existing API method"""
         api = Api(self.base_path, None)
-        method = api.parse(self.valid_request)
-        self.assertIsNotNone(method)
+        # /indexsetting
+        self.assertIsNotNone(api.parse(self.valid_request))
+        # /indexsettings
+        self.assertIsNotNone(api.parse({**self.valid_request, "path": f"{self.base_path}/indexingsettings", "body": json.dumps({"q1": self.valid_body})}))
+        # /endprice
+        body = {
+            **self.valid_body,
+            "INTERCEPT": 1.0,
+            "SLOPE": 1.0,
+            "TAXES": 1.0,
+        }
+        self.assertIsNotNone(api.parse({**self.valid_request, "path": f"{self.base_path}/endprice", "body": json.dumps(body)}))
+        # /endprices
+        self.assertIsNotNone(api.parse({**self.valid_request, "path": f"{self.base_path}/endprices", "body": json.dumps({"q1": body})}))
 
     def test_non_existing_method(self):
         """Test an non-existing API method"""

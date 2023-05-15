@@ -30,7 +30,7 @@ def convert_month(month: str) -> int:
         except ValueError:
             pass
     locale.setlocale(locale.LC_ALL, original)
-    return ValueError("Not able to translate")
+    raise ValueError("Not able to translate")
 
 
 @dataclass

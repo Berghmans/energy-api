@@ -9,8 +9,8 @@ import os
 import requests_mock
 from moto import mock_dynamodb
 
-from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe
+from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL, convert_month
+from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting
 from lambda_feeder import engie_handler as handler
 from tests.creators import create_dynamodb_table
 
@@ -25,6 +25,13 @@ def mock_url(mock, url: str, file_name: str):
 @requests_mock.Mocker()
 class TestEngieIndexingSetting(TestCase):
     """Test class for EngieIndexingSetting"""
+
+    def test_convert_month(self, mock):
+        """Test the convert_month method"""
+        self.assertEqual(5, convert_month("May"))
+        self.assertEqual(5, convert_month("mei"))
+        self.assertEqual(4, convert_month("april"))
+        self.assertRaises(ValueError, convert_month, "avril")
 
     def test_from_gas_url(self, mock):
         """Test the from_url method for gas"""
@@ -63,6 +70,40 @@ class TestEngieIndexingSetting(TestCase):
         self.assertEqual(109, len(indexes))
         indexes = EngieIndexingSetting.get_energy_values(date_filter=date(2023, 4, 1))
         self.assertEqual(7, len(indexes))
+
+    @mock_dynamodb
+    def test_calculate_derived_values(self, mock):
+        """Test the calculate_derived_values method"""
+        self.db_table = create_dynamodb_table()
+        indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=date(2023, 4, 30))
+        self.assertEqual(0, len(indexes))
+        sources = [
+            IndexingSetting(
+                name="SDAC BE",
+                value=1.0,
+                timeframe=IndexingSettingTimeframe.HOURLY,
+                date=datetime(2023, 4, 1, 1),
+                source="ENTSO-E",
+                origin=IndexingSettingOrigin.ORIGINAL,
+            ),
+            IndexingSetting(
+                name="SDAC BE",
+                value=2.0,
+                timeframe=IndexingSettingTimeframe.HOURLY,
+                date=datetime(2023, 4, 10, 1),
+                source="ENTSO-E",
+                origin=IndexingSettingOrigin.ORIGINAL,
+            ),
+        ]
+        IndexingSetting.save_list(self.db_table, sources)
+        indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=date(2023, 4, 30))
+        self.assertEqual(1, len(indexes))
+        self.assertEqual("Epex DAM", indexes[0].name)
+        self.assertEqual(1.5, indexes[0].value)
+
+        with patch("feeders.engie.IndexingSetting.query", return_value=[]):
+            indexes = EngieIndexingSetting.calculate_derived_values(self.db_table)
+            self.assertEqual(0, len(indexes))
 
 
 @mock_dynamodb

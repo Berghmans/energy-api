@@ -17,7 +17,7 @@ logger.setLevel(logging.INFO)
 def engie_handler(event, _context):
     """The Engie handler"""
     if "start" in event:
-        not_before = datetime.strptime(event["start"], "%Y/%m/%d").date()
+        not_before = datetime.strptime(event["start"], "%Y/%m/%d")
     else:
         not_before = datetime.now() - timedelta(days=90)
     index_values = EngieIndexingSetting.get_gas_values(not_before) + EngieIndexingSetting.get_energy_values(not_before)

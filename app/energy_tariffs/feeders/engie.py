@@ -44,7 +44,7 @@ class EngieIndexingSetting(IndexingSetting):
         data_span = cell.select_one("span.table_mobile_data")
         value = data_span.get_text().strip()
         return cls(
-            name=index_name,
+            name=index_name.replace(")", "").replace("(", ""),
             value=float(value.replace(",", ".")) if value is not None and value != "" else None,
             timeframe=IndexingSettingTimeframe.MONTHLY,
             date=datetime(year, convert_month(month), 1),

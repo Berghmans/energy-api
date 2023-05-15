@@ -167,8 +167,8 @@ Resources:
       Description: This secret has a values necessary for the application
       SecretString: '{"ENTSOE_KEY":"changme"}'
 
-  # Engie Feeder
-  LambdaEngieFeederRole:
+  # Feeder
+  LambdaFeederRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -181,7 +181,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
 
-  LambdaEngieFeederPolicy:
+  LambdaFeederPolicy:
     Type: "AWS::IAM::Policy"
     Properties:
       PolicyName: logs
@@ -189,141 +189,7 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Resource: !GetAtt LambdaEngieFeederLogs.Arn
-            Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-          - Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:BatchGetItem
-              - dynamodb:PutItem
-              - dynamodb:BatchWriteItem
-              - dynamodb:Scan
-              - dynamodb:Query
-              - dynamodb:ConditionCheckItem
-              - dynamodb:UpdateItem
-              - dynamodb:DeleteItem
-            Resource:
-              - !GetAtt IndexingSettingsTable.Arn
-      Roles:
-        - !Ref LambdaEngieFeederRole
-
-  LambdaEngieFeeder:
-    Type: AWS::Serverless::Function
-    Properties:
-      Description: "Lambda that feeds engie indexes"
-      Handler: "lambda_engie.handler"
-      CodeUri: app/energy_tariffs
-      Runtime: python3.9
-      Timeout: 60
-      MemorySize: 128
-      Role: !GetAtt LambdaEngieFeederRole.Arn
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref IndexingSettingsTable
-      Events:
-        ScheduleEvent:
-          Type: ScheduleV2
-          Properties:
-            ScheduleExpression: "rate(12 hours)"
-
-  LambdaEngieFeederLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${LambdaEngieFeeder}"
-      RetentionInDays: 7
-
-  # EEX Feeder
-  LambdaEEXFeederRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "lambda.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-
-  LambdaEEXFeederPolicy:
-    Type: "AWS::IAM::Policy"
-    Properties:
-      PolicyName: logs
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Resource: !GetAtt LambdaEEXFeederLogs.Arn
-            Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-          - Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:BatchGetItem
-              - dynamodb:PutItem
-              - dynamodb:BatchWriteItem
-              - dynamodb:Scan
-              - dynamodb:Query
-              - dynamodb:ConditionCheckItem
-              - dynamodb:UpdateItem
-              - dynamodb:DeleteItem
-            Resource:
-              - !GetAtt IndexingSettingsTable.Arn
-      Roles:
-        - !Ref LambdaEEXFeederRole
-
-  LambdaEEXFeeder:
-    Type: AWS::Serverless::Function
-    Properties:
-      Description: "Lambda that feeds EEX indexes"
-      Handler: "lambda_eex.handler"
-      CodeUri: app/energy_tariffs
-      Runtime: python3.9
-      Timeout: 60
-      MemorySize: 128
-      Role: !GetAtt LambdaEEXFeederRole.Arn
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref IndexingSettingsTable
-      Events:
-        ScheduleEvent:
-          Type: ScheduleV2
-          Properties:
-            ScheduleExpression: "rate(1 day)"
-
-  LambdaEEXFeederLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/${LambdaEEXFeeder}"
-      RetentionInDays: 7
-
-  # ENTSO-E Feeder
-  LambdaEntsoeFeederRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "lambda.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-
-  LambdaEntsoeFeederPolicy:
-    Type: "AWS::IAM::Policy"
-    Properties:
-      PolicyName: logs
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Resource: !GetAtt LambdaEntsoeFeederLogs.Arn
+            Resource: !GetAtt LambdaFeederLogs.Arn
             Action:
               - logs:CreateLogStream
               - logs:PutLogEvents
@@ -346,30 +212,41 @@ Resources:
             Resource:
               - !Ref Secrets
       Roles:
-        - !Ref LambdaEntsoeFeederRole
+        - !Ref LambdaFeederRole
 
-  LambdaEntsoeFeeder:
+  LambdaFeeder:
     Type: AWS::Serverless::Function
     Properties:
-      Description: "Lambda that feeds ENTSO-E indexes"
-      Handler: "lambda_entsoe.handler"
+      Description: "Lambda that feeds indexing settings"
+      Handler: "lambda_feeder.handler"
       CodeUri: app/energy_tariffs
       Runtime: python3.9
-      Timeout: 900
+      Timeout: 300
       MemorySize: 128
-      Role: !GetAtt LambdaEntsoeFeederRole.Arn
+      Role: !GetAtt LambdaFeederRole.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref IndexingSettingsTable
           SECRET_ARN: !Ref Secrets
       Events:
-        ScheduleEvent:
+        Engie:
           Type: ScheduleV2
           Properties:
             ScheduleExpression: "rate(12 hours)"
+            Input: '{"feed": "engie"}'
+        EEX:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(1 day)"
+            Input: '{"feed": "eex"}'
+        Entsoe:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(12 hours)"
+            Input: '{"feed": "entsoe"}'
 
-  LambdaEntsoeFeederLogs:
+  LambdaFeederLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/${LambdaEntsoeFeeder}"
+      LogGroupName: !Sub "/aws/lambda/${LambdaFeeder}"
       RetentionInDays: 7

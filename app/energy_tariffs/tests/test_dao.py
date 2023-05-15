@@ -37,7 +37,7 @@ class TestIndexingSetting(TestCase):
         self.index_obj.save(self.db_table)
         response = self.db_table.get_item(
             Key={
-                "primary": f"{self.index_source}#{self.index_name}",
+                "primary": f"{self.index_source}#ORIGINAL#{self.index_name}",
                 "secondary": f"{self.index_timeframe.name}#{self.index_datetime_str}",
             }
         )

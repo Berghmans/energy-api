@@ -30,7 +30,7 @@ class EndPriceApiMethod(ApiMethod):
             # b: the slope of the line, which is the factor to be multiplied with the indexing setting value
             end_price = self.intercept + self.slope * index_result.body["value"]
             end_price *= self.taxes
-            return ApiResult(200, {"end_price": end_price})
+            return ApiResult(200, {**index_result.body, "end_price": end_price})
         return ApiResult(400)
 
     @classmethod

@@ -69,6 +69,7 @@ class TestEndPriceApiMethod(TestCase):
             index_year=self.index_datetime.year,
             index_month=self.index_datetime.month,
         )
+        bare_result = bare_method.process()
         method = EndPriceApiMethod(
             index=bare_method,
             intercept=intercept,
@@ -77,7 +78,7 @@ class TestEndPriceApiMethod(TestCase):
         )
         result = method.process()
         self.assertEqual(200, result.status_code)
-        self.assertEqual({"end_price": ((self.index_value * slope) + intercept) * taxes}, result.body)
+        self.assertEqual({**bare_result.body, "end_price": ((self.index_value * slope) + intercept) * taxes}, result.body)
 
     def test_process_not_existing(self):
         """Test the process method for a not existing indexingsetting"""

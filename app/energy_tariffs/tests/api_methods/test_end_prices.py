@@ -83,6 +83,7 @@ class TestEndPricesApiMethod(TestCase):
             index_year=self.index_datetime.year,
             index_month=self.index_datetime.month,
         )
+        bare_method_result = bare_method.process()
         slope = 1.0
         intercept = 1.0
         taxes = 1.5
@@ -100,7 +101,7 @@ class TestEndPricesApiMethod(TestCase):
         )
         result = method.process()
         self.assertEqual(200, result.status_code)
-        expected = {"end_price": ((self.index_value * slope) + intercept) * taxes}
+        expected = {**bare_method_result.body, "end_price": ((self.index_value * slope) + intercept) * taxes}
         self.assertEqual({"q1": expected, "q2": expected}, result.body)
 
     def test_process_not_existing(self):

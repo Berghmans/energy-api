@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from pathlib import Path
 import json
 
 import requests
@@ -64,9 +63,6 @@ class EntsoeIndexingSetting(IndexingSetting):
         response.raise_for_status()
         if response.headers.get("content-type", "") == "application/xml" and "No matching data found" in response.text:
             raise ValueError("Not expecting no data")
-
-        with Path("tmp.xml").open(mode="w", encoding="utf-8") as file_handle:
-            file_handle.write(response.text)
 
         return [
             EntsoeIndexingSetting.from_entsoe_data(f"SDAC {country_code}", timestamp, value)

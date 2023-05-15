@@ -120,7 +120,7 @@ class EngieIndexingSetting(IndexingSetting):
                     name="Epex DAM",
                     value=value,
                     timeframe=IndexingSettingTimeframe.MONTHLY,
-                    date=datetime(tomorrow.year, tomorrow.month, 1),
+                    date=datetime(calculation_date.year, calculation_date.month, 1),
                     source="Engie",
                     origin=IndexingSettingOrigin.DERIVED,
                 )

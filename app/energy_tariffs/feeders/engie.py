@@ -117,7 +117,7 @@ class EngieIndexingSetting(IndexingSetting):
                 # Only calculate if we found results
                 value = round(mean(index.value for index in index_values_month), 2)
                 epex_dam = EngieIndexingSetting(
-                    name="EPEX DAM",
+                    name="Epex DAM",
                     value=value,
                     timeframe=IndexingSettingTimeframe.MONTHLY,
                     date=datetime(tomorrow.year, tomorrow.month, 1),

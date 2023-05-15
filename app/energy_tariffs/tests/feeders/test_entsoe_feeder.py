@@ -41,6 +41,20 @@ class TestEEXIndexingSetting(TestCase):
         self.assertEqual(48, len(indexes))
         self.assertEqual(65.99125, mean(index.value for index in indexes))
 
+    def test_non_implemented_country(self, mock):
+        """Test the query method with country out of scope"""
+        mock_url(mock, ENTSOE_URL, "entsoe_be.xml")
+        start = date(2023, 4, 1)
+        end = date(2023, 5, 1)
+        self.assertRaises(NotImplementedError, EntsoeIndexingSetting.query, api_key="key", country_code="FR", start=start, end=end)
+
+    def test_no_matching_data_found(self, mock):
+        """Test the query method with no matching data"""
+        mock.get(ENTSOE_URL, text="No matching data found", headers={"content-type": "application/xml"})
+        start = date(2023, 4, 1)
+        end = date(2023, 5, 1)
+        self.assertRaises(ValueError, EntsoeIndexingSetting.query, api_key="key", country_code="BE", start=start, end=end)
+
 
 @mock_dynamodb
 @mock_secretsmanager

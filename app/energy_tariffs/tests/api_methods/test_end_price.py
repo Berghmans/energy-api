@@ -6,6 +6,7 @@ from datetime import datetime
 from moto import mock_dynamodb
 
 from api.methods.end_price import EndPriceApiMethod
+from api.methods.indexing_setting import IndexingSettingApiMethod
 from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 from tests.creators import create_dynamodb_table
 
@@ -61,12 +62,15 @@ class TestEndPriceApiMethod(TestCase):
         slope = 1.0
         intercept = 1.0
         taxes = 1.5
-        method = EndPriceApiMethod(
+        bare_method = IndexingSettingApiMethod(
             db_table=self.db_table,
             index_name=self.index_name,
             index_source=self.index_source,
             index_year=self.index_datetime.year,
             index_month=self.index_datetime.month,
+        )
+        method = EndPriceApiMethod(
+            index=bare_method,
             intercept=intercept,
             slope=slope,
             taxes=taxes,
@@ -77,12 +81,15 @@ class TestEndPriceApiMethod(TestCase):
 
     def test_process_not_existing(self):
         """Test the process method for a not existing indexingsetting"""
-        method = EndPriceApiMethod(
+        bare_method = IndexingSettingApiMethod(
             db_table=self.db_table,
             index_name="otherindex",
             index_source=self.index_source,
             index_year=self.index_datetime.year,
             index_month=self.index_datetime.month,
+        )
+        method = EndPriceApiMethod(
+            index=bare_method,
             intercept=1.0,
             slope=1.0,
             taxes=1.5,

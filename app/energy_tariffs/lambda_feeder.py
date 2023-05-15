@@ -16,7 +16,10 @@ logger.setLevel(logging.INFO)
 
 def engie_handler(event, _context):
     """The Engie handler"""
-    not_before = datetime.now() - timedelta(days=90)
+    if "start" in event:
+        not_before = datetime.strptime(event["start"], "%Y/%m/%d").date()
+    else:
+        not_before = datetime.now() - timedelta(days=90)
     index_values = EngieIndexingSetting.get_gas_values(not_before) + EngieIndexingSetting.get_energy_values(not_before)
     dynamodb = boto3.resource("dynamodb")
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])

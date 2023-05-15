@@ -80,16 +80,16 @@ class EngieIndexingSetting(IndexingSetting):
         ]
 
     @staticmethod
-    def get_gas_values(date_filter: datetime = None):
+    def get_gas_values(date_filter: date = None):
         """Scrape the GAS indexing settings from the Engie website"""
         index_values = EngieIndexingSetting.from_url(GAS_URL)
-        return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]
+        return [index_value for index_value in index_values if (date_filter is None or index_value.date.date() >= date_filter)]
 
     @staticmethod
-    def get_energy_values(date_filter: datetime = None):
+    def get_energy_values(date_filter: date = None):
         """Scrape the ENERGY indexing settings from the Engie website"""
         index_values = EngieIndexingSetting.from_url(ENERGY_URL)
-        return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]
+        return [index_value for index_value in index_values if (date_filter is None or index_value.date.date() >= date_filter)]
 
     @staticmethod
     def calculate_derived_values(db_table, calculation_date: date = None) -> list[IndexingSetting]:

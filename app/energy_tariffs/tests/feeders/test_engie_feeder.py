@@ -1,9 +1,9 @@
 """Test module for lambda"""
 from __future__ import annotations
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, call
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import os
 
 import requests_mock
@@ -53,7 +53,7 @@ class TestEngieIndexingSetting(TestCase):
         mock_url(mock, GAS_URL, "engie_gas.html")
         indexes = EngieIndexingSetting.get_gas_values()
         self.assertEqual(134, len(indexes))
-        indexes = EngieIndexingSetting.get_gas_values(date_filter=datetime(2023, 4, 1))
+        indexes = EngieIndexingSetting.get_gas_values(date_filter=date(2023, 4, 1))
         self.assertEqual(8, len(indexes))
 
     def test_get_energy_values(self, mock):
@@ -61,7 +61,7 @@ class TestEngieIndexingSetting(TestCase):
         mock_url(mock, ENERGY_URL, "engie_energy.html")
         indexes = EngieIndexingSetting.get_energy_values()
         self.assertEqual(109, len(indexes))
-        indexes = EngieIndexingSetting.get_energy_values(date_filter=datetime(2023, 4, 1))
+        indexes = EngieIndexingSetting.get_energy_values(date_filter=date(2023, 4, 1))
         self.assertEqual(7, len(indexes))
 
 
@@ -93,6 +93,16 @@ class TestLambdaHandlerEngie(TestCase):
                 IndexingSettingOrigin.ORIGINAL,
             )
         ]
+        self.derived_indexes = [
+            EngieIndexingSetting(
+                "index3",
+                1.1,
+                IndexingSettingTimeframe.MONTHLY,
+                datetime(now.year, now.month, 1),
+                "src",
+                IndexingSettingOrigin.DERIVED,
+            )
+        ]
 
     def test_handler(self):
         """Test the lambda handler"""
@@ -100,8 +110,24 @@ class TestLambdaHandlerEngie(TestCase):
         # and otherwise we would have no consistent results the coming months
         with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=self.gas_indexes), patch(
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=self.energy_indexes
-        ):
+        ), patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=self.derived_indexes):
             os.environ["TABLE_NAME"] = self.db_table.name
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})
-            self.assertEqual(2, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(3, len(self.db_table.scan().get("Items", [])))
+
+        with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=[]) as mock_gas, patch(
+            "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]
+        ) as mock_energy, patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=[]) as mock_derived:
+            handler({"start": "2023/04/01"}, {})
+            self.assertEqual([call(date(2023, 4, 1))], mock_gas.mock_calls)
+            self.assertEqual([call(date(2023, 4, 1))], mock_energy.mock_calls)
+            self.assertEqual([call(self.db_table, None)], mock_derived.mock_calls)
+
+        with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=[]) as mock_gas, patch(
+            "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]
+        ) as mock_energy, patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=[]) as mock_derived:
+            handler({"calculate": "2023/04/30"}, {})
+            self.assertEqual([call(date.today() - timedelta(days=90))], mock_gas.mock_calls)
+            self.assertEqual([call(date.today() - timedelta(days=90))], mock_energy.mock_calls)
+            self.assertEqual([call(self.db_table, date(2023, 4, 30))], mock_derived.mock_calls)

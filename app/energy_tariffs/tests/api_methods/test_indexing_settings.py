@@ -46,8 +46,7 @@ class TestIndexingSettingsApiMethod(TestCase):
         request = {
             "INDEX": "index1",
             "SOURCE": "src",
-            "YEAR": 2023,
-            "MONTH": 5,
+            "DATE": "2023-05-01 00:00",
         }
         self.assertIsNotNone(
             IndexingSettingsApiMethod.from_body(
@@ -75,10 +74,11 @@ class TestIndexingSettingsApiMethod(TestCase):
         """Test the process method"""
         request = IndexingSettingApiMethod(
             db_table=self.db_table,
-            index_name=self.index_name,
-            index_source=self.index_source,
-            index_year=self.index_datetime.year,
-            index_month=self.index_datetime.month,
+            name=self.index_name,
+            source=self.index_source,
+            date=datetime(year=self.index_datetime.year, month=self.index_datetime.month, day=1),
+            timeframe=IndexingSettingTimeframe.MONTHLY,
+            origin=IndexingSettingOrigin.ORIGINAL,
         )
         method = IndexingSettingsApiMethod(
             indexes={
@@ -97,17 +97,19 @@ class TestIndexingSettingsApiMethod(TestCase):
             indexes={
                 "q1": IndexingSettingApiMethod(
                     db_table=self.db_table,
-                    index_name=self.index_name,
-                    index_source=self.index_source,
-                    index_year=self.index_datetime.year,
-                    index_month=self.index_datetime.month,
+                    name=self.index_name,
+                    source=self.index_source,
+                    date=datetime(year=self.index_datetime.year, month=self.index_datetime.month, day=1),
+                    timeframe=IndexingSettingTimeframe.MONTHLY,
+                    origin=IndexingSettingOrigin.ORIGINAL,
                 ),
                 "q2": IndexingSettingApiMethod(
                     db_table=self.db_table,
-                    index_name="otherindex",
-                    index_source=self.index_source,
-                    index_year=self.index_datetime.year,
-                    index_month=self.index_datetime.month,
+                    name="otherindex",
+                    source=self.index_source,
+                    date=datetime(year=self.index_datetime.year, month=self.index_datetime.month, day=1),
+                    timeframe=IndexingSettingTimeframe.MONTHLY,
+                    origin=IndexingSettingOrigin.ORIGINAL,
                 ),
             }
         )

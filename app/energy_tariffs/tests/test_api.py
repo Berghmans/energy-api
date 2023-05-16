@@ -27,15 +27,14 @@ class TestApi(TestCase):
             "index1",
             1.1,
             IndexingSettingTimeframe.MONTHLY,
-            datetime(2023, 5, 1),
+            datetime(2023, 4, 1),
             "src",
             IndexingSettingOrigin.ORIGINAL,
         ).save(self.db_table)
         self.valid_body = {
             "INDEX": "index1",
             "SOURCE": "src",
-            "YEAR": 2023,
-            "MONTH": 5,
+            "DATE": "2023-05-01 00:00",
         }
         self.valid_request = {
             "path": f"{self.base_path}/indexingsetting",

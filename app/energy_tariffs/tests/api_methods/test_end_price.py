@@ -48,8 +48,7 @@ class TestEndPriceApiMethod(TestCase):
                 {
                     "INDEX": "index1",
                     "SOURCE": "src",
-                    "YEAR": 2023,
-                    "MONTH": 5,
+                    "DATE": "2023-05-01 00:00",
                     "INTERCEPT": 1.0,
                     "SLOPE": 1.0,
                     "TAXES": 1.0,
@@ -64,10 +63,11 @@ class TestEndPriceApiMethod(TestCase):
         taxes = 1.5
         bare_method = IndexingSettingApiMethod(
             db_table=self.db_table,
-            index_name=self.index_name,
-            index_source=self.index_source,
-            index_year=self.index_datetime.year,
-            index_month=self.index_datetime.month,
+            name=self.index_name,
+            source=self.index_source,
+            date=datetime(year=self.index_datetime.year, month=self.index_datetime.month, day=1),
+            timeframe=IndexingSettingTimeframe.MONTHLY,
+            origin=IndexingSettingOrigin.ORIGINAL,
         )
         bare_result = bare_method.process()
         method = EndPriceApiMethod(
@@ -84,10 +84,11 @@ class TestEndPriceApiMethod(TestCase):
         """Test the process method for a not existing indexingsetting"""
         bare_method = IndexingSettingApiMethod(
             db_table=self.db_table,
-            index_name="otherindex",
-            index_source=self.index_source,
-            index_year=self.index_datetime.year,
-            index_month=self.index_datetime.month,
+            name="otherindex",
+            source=self.index_source,
+            date=datetime(year=self.index_datetime.year, month=self.index_datetime.month, day=1),
+            timeframe=IndexingSettingTimeframe.MONTHLY,
+            origin=IndexingSettingOrigin.ORIGINAL,
         )
         method = EndPriceApiMethod(
             index=bare_method,

@@ -6,6 +6,7 @@ import json
 import os
 
 from moto import mock_dynamodb
+from pytz import utc
 
 from api import Api
 from api.method import ApiMethod
@@ -27,7 +28,7 @@ class TestApi(TestCase):
             "index1",
             1.1,
             IndexingSettingTimeframe.MONTHLY,
-            datetime(2023, 4, 1),
+            datetime(2023, 4, 1, tzinfo=utc),
             "src",
             IndexingSettingOrigin.ORIGINAL,
         ).save(self.db_table)

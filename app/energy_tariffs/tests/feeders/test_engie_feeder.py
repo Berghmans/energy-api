@@ -8,6 +8,7 @@ import os
 
 import requests_mock
 from moto import mock_dynamodb
+from pytz import utc
 
 from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL, convert_month
 from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting
@@ -82,7 +83,7 @@ class TestEngieIndexingSetting(TestCase):
                 name="SDAC BE",
                 value=1.0,
                 timeframe=IndexingSettingTimeframe.HOURLY,
-                date=datetime(2023, 4, 1, 1),
+                date=datetime(2023, 4, 1, 1, tzinfo=utc),
                 source="ENTSO-E",
                 origin=IndexingSettingOrigin.ORIGINAL,
             ),
@@ -90,7 +91,7 @@ class TestEngieIndexingSetting(TestCase):
                 name="SDAC BE",
                 value=2.0,
                 timeframe=IndexingSettingTimeframe.HOURLY,
-                date=datetime(2023, 4, 10, 1),
+                date=datetime(2023, 4, 10, 1, tzinfo=utc),
                 source="ENTSO-E",
                 origin=IndexingSettingOrigin.ORIGINAL,
             ),
@@ -119,7 +120,7 @@ class TestLambdaHandlerEngie(TestCase):
                 "index1",
                 1.1,
                 IndexingSettingTimeframe.MONTHLY,
-                datetime(now.year, now.month, 1),
+                datetime(now.year, now.month, 1, tzinfo=utc),
                 "src",
                 IndexingSettingOrigin.ORIGINAL,
             )
@@ -129,7 +130,7 @@ class TestLambdaHandlerEngie(TestCase):
                 "index2",
                 1.1,
                 IndexingSettingTimeframe.MONTHLY,
-                datetime(now.year, now.month, 1),
+                datetime(now.year, now.month, 1, tzinfo=utc),
                 "src",
                 IndexingSettingOrigin.ORIGINAL,
             )
@@ -139,7 +140,7 @@ class TestLambdaHandlerEngie(TestCase):
                 "index3",
                 1.1,
                 IndexingSettingTimeframe.MONTHLY,
-                datetime(now.year, now.month, 1),
+                datetime(now.year, now.month, 1, tzinfo=utc),
                 "src",
                 IndexingSettingOrigin.DERIVED,
             )

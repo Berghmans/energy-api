@@ -5,6 +5,7 @@ from unittest import TestCase
 from datetime import datetime
 
 from moto import mock_dynamodb
+from pytz import utc
 
 from api.methods.indexing_settings import IndexingSettingsApiMethod
 from api.methods.indexing_setting import IndexingSettingApiMethod
@@ -21,7 +22,7 @@ class TestIndexingSettingsApiMethod(TestCase):
         self.db_table = create_dynamodb_table()
         self.index_name = "index1"
         self.index_timeframe = IndexingSettingTimeframe.MONTHLY
-        self.index_datetime = datetime(2023, 5, 1, 0, 0, 0)
+        self.index_datetime = datetime(2023, 5, 1, 0, 0, 0, tzinfo=utc)
         self.index_datetime_str = "2023-05-01 05:00:00"
         self.index_source = "src"
         self.index_origin = IndexingSettingOrigin.ORIGINAL

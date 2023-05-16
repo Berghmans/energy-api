@@ -7,6 +7,7 @@ import logging
 
 from bs4 import BeautifulSoup
 import requests
+from pytz import utc
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -47,7 +48,7 @@ class EngieIndexingSetting(IndexingSetting):
             name=index_name.replace(")", "").replace("(", ""),
             value=float(value.replace(",", ".")) if value is not None and value != "" else None,
             timeframe=IndexingSettingTimeframe.MONTHLY,
-            date=datetime(year, convert_month(month), 1),
+            date=datetime(year, convert_month(month), 1, tzinfo=utc),
             source="Engie",
             origin=IndexingSettingOrigin.ORIGINAL,
         )
@@ -120,7 +121,7 @@ class EngieIndexingSetting(IndexingSetting):
                     name="Epex DAM",
                     value=value,
                     timeframe=IndexingSettingTimeframe.MONTHLY,
-                    date=datetime(calculation_date.year, calculation_date.month, 1),
+                    date=datetime(calculation_date.year, calculation_date.month, 1, tzinfo=utc),
                     source="Engie",
                     origin=IndexingSettingOrigin.DERIVED,
                 )

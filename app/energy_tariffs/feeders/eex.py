@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, date
 
 import requests
+from pytz import utc
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -21,7 +22,7 @@ class EEXIndexingSetting(IndexingSetting):
     @classmethod
     def from_eex_json(cls, index_name: str, data):
         """Parse from the EEX JSON"""
-        date_time = datetime.strptime(data.get("tradedatetimegmt"), "%m/%d/%Y %H:%M:%S %p")
+        date_time = datetime.strptime(data.get("tradedatetimegmt"), "%m/%d/%Y %H:%M:%S %p").replace(tzinfo=utc)
         value = data.get("close")
         return cls(
             name=index_name.removeprefix("#E.").replace("_", " "),

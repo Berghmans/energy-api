@@ -4,6 +4,7 @@ from unittest import TestCase
 from datetime import datetime, date
 
 from moto import mock_dynamodb
+from pytz import utc
 
 from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 from tests.creators import create_dynamodb_table
@@ -18,7 +19,7 @@ class TestIndexingSetting(TestCase):
         self.db_table = create_dynamodb_table()
         self.index_name = "index1"
         self.index_timeframe = IndexingSettingTimeframe.HOURLY
-        self.index_datetime = datetime(2023, 5, 12, 5, 0, 0)
+        self.index_datetime = datetime(2023, 5, 12, 5, 0, 0, tzinfo=utc)
         self.index_datetime_str = "2023-05-12 05:00:00"
         self.index_source = "src"
         self.index_origin = IndexingSettingOrigin.ORIGINAL
@@ -104,7 +105,7 @@ class TestIndexingSetting(TestCase):
                 self.index_name,
                 self.index_value,
                 self.index_timeframe,
-                datetime(2023, 1 + i, 1, 0, 0, 0),
+                datetime(2023, 1 + i, 1, 0, 0, 0, tzinfo=utc),
                 self.index_source,
                 self.index_origin,
             ).save(self.db_table)
@@ -118,7 +119,7 @@ class TestIndexingSetting(TestCase):
                 self.index_name,
                 self.index_value,
                 self.index_timeframe,
-                datetime(2023, 1 + i, 1, 0, 0, 0),
+                datetime(2023, 1 + i, 1, 0, 0, 0, tzinfo=utc),
                 self.index_source,
                 self.index_origin,
             ).save(self.db_table)

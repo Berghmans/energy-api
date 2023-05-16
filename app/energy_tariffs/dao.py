@@ -4,6 +4,7 @@ from enum import Enum, auto
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
+from pytz import utc
 from boto3.dynamodb.conditions import Key
 
 
@@ -33,6 +34,10 @@ class IndexingSetting:
     source: str  # The source of the data, either directly or whether is was derived from those values: Engie/EEX/...
     origin: IndexingSettingOrigin  # Whether the data is "original" or "derived", i.e. calculated from multiple (original) values
 
+    def __post_init__(self):
+        """Post initialization"""
+        assert self.date.tzinfo is not None and self.date is not None
+
     def save(self, db_table):
         """Save the object to the dynamodb database"""
         db_table.put_item(Item=self._to_ddb_json())
@@ -45,7 +50,7 @@ class IndexingSetting:
 
     def _to_ddb_json(self):
         """Convert the current object to a JSON for storing in dynamodb"""
-        date_time_str = self.date.strftime("%Y-%m-%d %H:%M:%S")
+        date_time_str = self.date.astimezone(utc).strftime("%Y-%m-%d %H:%M:%S")
         return {
             **asdict(self),
             "primary": f"{self.source}#{self.origin.name}#{self.name}",
@@ -54,7 +59,7 @@ class IndexingSetting:
             "timeframe": self.timeframe.name,
             "origin": self.origin.name,
             "value": str(self.value),
-            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_updated": datetime.now(utc).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
     @classmethod
@@ -64,7 +69,7 @@ class IndexingSetting:
             name=data.get("name"),
             value=float(data.get("value")),
             timeframe=IndexingSettingTimeframe[data.get("timeframe")],
-            date=datetime.strptime(data.get("date"), "%Y-%m-%d %H:%M:%S"),
+            date=datetime.strptime(data.get("date"), "%Y-%m-%d %H:%M:%S").replace(tzinfo=utc),
             source=data.get("source"),
             origin=IndexingSettingOrigin[data.get("origin")],
         )

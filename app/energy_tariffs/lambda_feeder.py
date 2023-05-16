@@ -57,7 +57,8 @@ def entsoe_handler(event, _context):
         not_after = datetime.strptime(event["end"], "%Y/%m/%d").date()
     else:
         not_before = date.today() - timedelta(days=7)
-        not_after = None
+        not_after = date.today() + timedelta(days=1)
+    logger.info(f"Fetching values from {not_before} to {not_after}")
     api_key = EntsoeIndexingSetting.fetch_api_key(os.environ["SECRET_ARN"])
     index_values = EntsoeIndexingSetting.get_be_values(api_key=api_key, date_filter=not_before, end=not_after)
     dynamodb = boto3.resource("dynamodb")

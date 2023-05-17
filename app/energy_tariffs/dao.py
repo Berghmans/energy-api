@@ -51,10 +51,11 @@ class IndexingSetting:
     def _to_ddb_json(self):
         """Convert the current object to a JSON for storing in dynamodb"""
         date_time_str = self.date.astimezone(utc).strftime("%Y-%m-%d %H:%M:%S")
+        secondary = int(self.date.astimezone(utc).timestamp())
         return {
             **asdict(self),
-            "primary": f"{self.source}#{self.origin.name}#{self.name}",
-            "secondary": f"{self.timeframe.name}#{date_time_str}",
+            "primary": f"{self.source}#{self.origin.name}#{self.timeframe.name}#{self.name}",
+            "secondary": secondary,
             "date": date_time_str,
             "timeframe": self.timeframe.name,
             "origin": self.origin.name,
@@ -85,8 +86,8 @@ class IndexingSetting:
         origin: IndexingSettingOrigin = IndexingSettingOrigin.ORIGINAL,
     ):
         """Retrieve a single object from the database"""
-        date_time_str = date_time.strftime("%Y-%m-%d %H:%M:%S")
-        response = db_table.get_item(Key={"primary": f"{source}#{origin.name}#{name}", "secondary": f"{timeframe.name}#{date_time_str}"})
+        secondary = int(date_time.astimezone(utc).timestamp())
+        response = db_table.get_item(Key={"primary": f"{source}#{origin.name}#{timeframe.name}#{name}", "secondary": secondary})
 
         if "Item" in response:
             return cls._from_ddb_json(response["Item"])
@@ -96,18 +97,19 @@ class IndexingSetting:
         db_table,
         source: str,
         name: str,
-        timeframe: IndexingSettingTimeframe = None,
-        date_time_prefix: str = None,
         origin: IndexingSettingOrigin = IndexingSettingOrigin.ORIGINAL,
+        timeframe: IndexingSettingTimeframe = IndexingSettingTimeframe.MONTHLY,
+        start: datetime = None,
+        end: datetime = None,
     ) -> list[IndexingSetting]:
         """Query all objects in the database from the same campaign"""
-        key_condition = Key("primary").eq(f"{source}#{origin.name}#{name}")
-        if timeframe is not None and date_time_prefix is not None:
-            key_condition = key_condition & Key("secondary").begins_with(f"{timeframe.name}#{date_time_prefix}")
-        elif timeframe is not None and date_time_prefix is None:
-            key_condition = key_condition & Key("secondary").begins_with(f"{timeframe.name}")
-        elif timeframe is None and date_time_prefix is not None:
-            raise ValueError("Cannot query for date time prefix without timeframe")
+        key_condition = Key("primary").eq(f"{source}#{origin.name}#{timeframe.name}#{name}")
+        if start is not None and end is None:
+            key_condition = key_condition & Key("secondary").gte(int(start.astimezone(utc).timestamp()))
+        if end is not None and start is None:
+            key_condition = key_condition & Key("secondary").lt(int(end.astimezone(utc).timestamp()))
+        if start is not None and end is not None:
+            key_condition = key_condition & Key("secondary").between(int(start.astimezone(utc).timestamp()), int(end.astimezone(utc).timestamp()))
 
         response = db_table.query(
             Select="ALL_ATTRIBUTES",

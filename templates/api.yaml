@@ -146,7 +146,7 @@ Resources:
         - AttributeName: "primary"
           AttributeType: "S"
         - AttributeName: "secondary"
-          AttributeType: "S"
+          AttributeType: "N"
       KeySchema:
         - AttributeName: "primary"
           KeyType: "HASH"
@@ -155,7 +155,7 @@ Resources:
       BillingMode: PROVISIONED
       ProvisionedThroughput:
         ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+        WriteCapacityUnits: 2
       TimeToLiveSpecification:
         AttributeName: "ttl"
         Enabled: true

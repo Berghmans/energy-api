@@ -3,11 +3,12 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import patch, call
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 import os
 
 import requests_mock
 from moto import mock_dynamodb
+from pytz import utc
 
 from feeders.eex import EEXIndexingSetting, EEX_URL
 from dao import IndexingSettingOrigin, IndexingSettingTimeframe
@@ -53,7 +54,7 @@ class TestLambdaHandlerEngie(TestCase):
     def setUp(self):
         """Set up the test"""
         self.db_table = create_dynamodb_table()
-        now = date.today()
+        now = datetime.now(utc)
         self.gas_indexes = [
             EEXIndexingSetting(
                 "index1",

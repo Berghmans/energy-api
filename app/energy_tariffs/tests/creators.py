@@ -11,7 +11,7 @@ def create_dynamodb_table():
         TableName="singular-table",
         AttributeDefinitions=[
             {"AttributeName": "primary", "AttributeType": "S"},
-            {"AttributeName": "secondary", "AttributeType": "S"},
+            {"AttributeName": "secondary", "AttributeType": "N"},
         ],
         KeySchema=[
             {"AttributeName": "primary", "KeyType": "HASH"},

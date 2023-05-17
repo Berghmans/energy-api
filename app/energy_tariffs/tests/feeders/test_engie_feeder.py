@@ -8,9 +8,11 @@ import os
 
 import requests_mock
 from moto import mock_dynamodb
+from pytz import utc, timezone
 
 from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL, convert_month
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting
+from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
+from dao import IndexingSettingOrigin, IndexingSettingTimeframe
 from lambda_feeder import engie_handler as handler
 from tests.creators import create_dynamodb_table
 
@@ -43,6 +45,7 @@ class TestEngieIndexingSetting(TestCase):
         self.assertTrue(all([index.timeframe == IndexingSettingTimeframe.MONTHLY for index in indexes]))
         self.assertTrue(all([index.date.day == 1 for index in indexes]))
         self.assertTrue(all([index.origin == IndexingSettingOrigin.ORIGINAL for index in indexes]))
+        self.assertTrue(all([index.date.tzname() in ["CET", "CEST"] for index in indexes]))
 
     def test_from_energy_url(self, mock):
         """Test the from_url method for gas"""
@@ -54,52 +57,45 @@ class TestEngieIndexingSetting(TestCase):
         self.assertTrue(all([index.timeframe == IndexingSettingTimeframe.MONTHLY for index in indexes]))
         self.assertTrue(all([index.date.day == 1 for index in indexes]))
         self.assertTrue(all([index.origin == IndexingSettingOrigin.ORIGINAL for index in indexes]))
+        self.assertTrue(all([index.date.tzname() in ["CET", "CEST"] for index in indexes]))
 
     def test_get_gas_values(self, mock):
         """Test the get_gas_values method"""
         mock_url(mock, GAS_URL, "engie_gas.html")
         indexes = EngieIndexingSetting.get_gas_values()
+        start = timezone("Europe/Brussels").localize(datetime(2023, 4, 1))
         self.assertEqual(134, len(indexes))
-        indexes = EngieIndexingSetting.get_gas_values(date_filter=date(2023, 4, 1))
+        indexes = EngieIndexingSetting.get_gas_values(date_filter=start)
         self.assertEqual(8, len(indexes))
 
     def test_get_energy_values(self, mock):
         """Test the get_energy_values method"""
         mock_url(mock, ENERGY_URL, "engie_energy.html")
         indexes = EngieIndexingSetting.get_energy_values()
+        start = timezone("Europe/Brussels").localize(datetime(2023, 4, 1))
         self.assertEqual(109, len(indexes))
-        indexes = EngieIndexingSetting.get_energy_values(date_filter=date(2023, 4, 1))
+        indexes = EngieIndexingSetting.get_energy_values(date_filter=start)
         self.assertEqual(7, len(indexes))
 
     @mock_dynamodb
     def test_calculate_derived_values(self, mock):
         """Test the calculate_derived_values method"""
         self.db_table = create_dynamodb_table()
-        indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=date(2023, 4, 30))
+        indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=datetime(2023, 4, 30, tzinfo=utc))
         self.assertEqual(0, len(indexes))
-        sources = [
-            IndexingSetting(
-                name="SDAC BE",
-                value=1.0,
-                timeframe=IndexingSettingTimeframe.HOURLY,
-                date=datetime(2023, 4, 1, 1),
-                source="ENTSO-E",
-                origin=IndexingSettingOrigin.ORIGINAL,
-            ),
-            IndexingSetting(
-                name="SDAC BE",
-                value=2.0,
-                timeframe=IndexingSettingTimeframe.HOURLY,
-                date=datetime(2023, 4, 10, 1),
-                source="ENTSO-E",
-                origin=IndexingSettingOrigin.ORIGINAL,
-            ),
-        ]
-        IndexingSetting.save_list(self.db_table, sources)
-        indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=date(2023, 4, 30))
+
+        # Fill database
+        mock_url(mock, ENTSOE_URL, "entsoe_be.xml")
+        tz_be = timezone("Europe/Brussels")
+        start = tz_be.localize(datetime(2023, 4, 1))
+        end = tz_be.localize(datetime(2023, 5, 1))
+        indexes = EntsoeIndexingSetting.get_be_values(api_key="key", start=start, end=end)
+        EntsoeIndexingSetting.save_list(self.db_table, indexes)
+
+        indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=tz_be.localize(datetime(2023, 4, 30)))
         self.assertEqual(1, len(indexes))
         self.assertEqual("Epex DAM", indexes[0].name)
-        self.assertEqual(1.5, indexes[0].value)
+        self.assertEqual(105.53, indexes[0].value)
 
         with patch("feeders.engie.IndexingSetting.query", return_value=[]):
             indexes = EngieIndexingSetting.calculate_derived_values(self.db_table)
@@ -119,7 +115,7 @@ class TestLambdaHandlerEngie(TestCase):
                 "index1",
                 1.1,
                 IndexingSettingTimeframe.MONTHLY,
-                datetime(now.year, now.month, 1),
+                datetime(now.year, now.month, 1, tzinfo=utc),
                 "src",
                 IndexingSettingOrigin.ORIGINAL,
             )
@@ -129,7 +125,7 @@ class TestLambdaHandlerEngie(TestCase):
                 "index2",
                 1.1,
                 IndexingSettingTimeframe.MONTHLY,
-                datetime(now.year, now.month, 1),
+                datetime(now.year, now.month, 1, tzinfo=utc),
                 "src",
                 IndexingSettingOrigin.ORIGINAL,
             )
@@ -139,7 +135,7 @@ class TestLambdaHandlerEngie(TestCase):
                 "index3",
                 1.1,
                 IndexingSettingTimeframe.MONTHLY,
-                datetime(now.year, now.month, 1),
+                datetime(now.year, now.month, 1, tzinfo=utc),
                 "src",
                 IndexingSettingOrigin.DERIVED,
             )

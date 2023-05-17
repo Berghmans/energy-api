@@ -9,6 +9,7 @@ import os
 
 from moto import mock_dynamodb, mock_secretsmanager
 import requests_mock
+from pytz import utc, timezone
 
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
 from dao import IndexingSettingOrigin, IndexingSettingTimeframe
@@ -30,29 +31,44 @@ class TestEEXIndexingSetting(TestCase):
     def test_get_be_values(self, mock):
         """Test the get_ztp_values method"""
         mock_url(mock, ENTSOE_URL, "entsoe_be.xml")
-        start = date(2023, 4, 1)
-        end = date(2023, 5, 1)
-        indexes = EntsoeIndexingSetting.get_be_values(api_key="key", date_filter=start, end=end)
+        tz_be = timezone("Europe/Brussels")
+        start = tz_be.localize(datetime(2023, 4, 1))
+        end = tz_be.localize(datetime(2023, 5, 1))
+        indexes = EntsoeIndexingSetting.get_be_values(api_key="key", start=start, end=end)
+        self.assertEqual(
+            f"{ENTSOE_URL}?documentType=A44&"
+            "in_Domain=10YBE----------2&out_Domain=10YBE----------2"
+            "&securityToken=key&periodStart=202303312200&periodEnd=202304302200",
+            mock.request_history[0].url,
+        )
         self.assertEqual(720, len(indexes))
         self.assertEqual(105.53447222222222, mean(index.value for index in indexes))
-        start = date(2023, 4, 10)
-        end = date(2023, 4, 11)
-        indexes = EntsoeIndexingSetting.get_be_values(api_key="key", date_filter=start, end=end)
+        start = tz_be.localize(datetime(2023, 4, 10))
+        end = tz_be.localize(datetime(2023, 4, 12))
+        indexes = EntsoeIndexingSetting.get_be_values(api_key="key", start=start, end=end)
+        self.assertEqual(
+            f"{ENTSOE_URL}?documentType=A44&"
+            "in_Domain=10YBE----------2&out_Domain=10YBE----------2"
+            "&securityToken=key&periodStart=202304092200&periodEnd=202304112200",
+            mock.request_history[1].url,
+        )
         self.assertEqual(48, len(indexes))
         self.assertEqual(65.99125, mean(index.value for index in indexes))
 
     def test_non_implemented_country(self, mock):
         """Test the query method with country out of scope"""
         mock_url(mock, ENTSOE_URL, "entsoe_be.xml")
-        start = date(2023, 4, 1)
-        end = date(2023, 5, 1)
+        tz_be = timezone("Europe/Brussels")
+        start = tz_be.localize(datetime(2023, 4, 1))
+        end = tz_be.localize(datetime(2023, 5, 1))
         self.assertRaises(NotImplementedError, EntsoeIndexingSetting.query, api_key="key", country_code="FR", start=start, end=end)
 
     def test_no_matching_data_found(self, mock):
         """Test the query method with no matching data"""
         mock.get(ENTSOE_URL, text="No matching data found", headers={"content-type": "application/xml"})
-        start = date(2023, 4, 1)
-        end = date(2023, 5, 1)
+        tz_be = timezone("Europe/Brussels")
+        start = tz_be.localize(datetime(2023, 4, 1))
+        end = tz_be.localize(datetime(2023, 5, 1))
         self.assertRaises(ValueError, EntsoeIndexingSetting.query, api_key="key", country_code="BE", start=start, end=end)
 
 
@@ -65,7 +81,7 @@ class TestLambdaHandlerEntsoe(TestCase):
         """Set up the test"""
         self.db_table = create_dynamodb_table()
         self.secret = create_secrets()
-        now = datetime.now()
+        now = datetime.now(utc)
         self.indexes = [
             EntsoeIndexingSetting(
                 "index1",

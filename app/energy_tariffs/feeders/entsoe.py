@@ -1,20 +1,19 @@
 """Module for getting ENTSO-E SDAC prices (Single Day Ahead Coupling price)"""
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 import json
 
 import requests
 import boto3
-import pytz
+from pytz import utc
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
 
 ENTSOE_URL = "https://web-api.tp.entsoe.eu/api"
-BE_TZ = pytz.timezone("Europe/Brussels")
 
 
 @dataclass
@@ -34,7 +33,7 @@ class EntsoeIndexingSetting(IndexingSetting):
             name=index_name,
             value=value,
             timeframe=IndexingSettingTimeframe.HOURLY,
-            date=date_time.replace(tzinfo=None, minute=0, second=0),
+            date=date_time.replace(minute=0, second=0),
             source="ENTSO-E",
             origin=IndexingSettingOrigin.ORIGINAL,
         )
@@ -47,7 +46,7 @@ class EntsoeIndexingSetting(IndexingSetting):
             yield EntsoeTimeSeries.from_xml(timeseries)
 
     @staticmethod
-    def query(api_key: str, country_code: str, start: date, end: date):
+    def query(api_key: str, country_code: str, start: datetime, end: datetime):
         """Query"""
         area = EntsoeIndexingSetting.lookup_area_code(country_code=country_code)
         params = {
@@ -55,8 +54,8 @@ class EntsoeIndexingSetting(IndexingSetting):
             "in_Domain": area,
             "out_Domain": area,
             "securityToken": api_key,
-            "periodStart": start.strftime("%Y%m%d%H00"),
-            "periodEnd": end.strftime("%Y%m%d%H00"),
+            "periodStart": start.astimezone(utc).strftime("%Y%m%d%H00"),
+            "periodEnd": end.astimezone(utc).strftime("%Y%m%d%H00"),
         }
 
         response = requests.get(url=ENTSOE_URL, params=params)
@@ -68,13 +67,13 @@ class EntsoeIndexingSetting(IndexingSetting):
             EntsoeIndexingSetting.from_entsoe_data(f"SDAC {country_code}", timestamp, value)
             for timeserie in EntsoeIndexingSetting.iterate_timeseries(response.text)
             for timestamp, value in timeserie.to_period().items()
-            if timestamp.date() >= start and timestamp.date() <= end
+            if timestamp >= start and timestamp < end
         ]
 
     @staticmethod
-    def get_be_values(api_key: str, date_filter: date, end: date = None):
+    def get_be_values(api_key: str, start: datetime, end: datetime = None):
         """Get the Belgium SDAC"""
-        return EntsoeIndexingSetting.query(api_key=api_key, country_code="BE", start=date_filter, end=(date.today() if end is None else end))
+        return EntsoeIndexingSetting.query(api_key=api_key, country_code="BE", start=start, end=(datetime.now(utc) if end is None else end))
 
     @staticmethod
     def fetch_api_key(secret_arn: str) -> str:
@@ -113,5 +112,4 @@ class EntsoeTimeSeries:
         return cls(currency=currency, measure_unit=measure_unit, start_time=start_datetime, end_time=end_datetime, resolution=resolution, period=values)
 
     def to_period(self) -> dict[datetime, float]:
-        start_time = self.start_time.astimezone(BE_TZ)
-        return {start_time + timedelta(hours=i): value for i, value in enumerate(self.period)}
+        return {self.start_time + timedelta(hours=i): value for i, value in enumerate(self.period)}

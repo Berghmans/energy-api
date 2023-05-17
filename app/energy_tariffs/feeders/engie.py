@@ -7,7 +7,7 @@ import logging
 
 from bs4 import BeautifulSoup
 import requests
-from pytz import utc, timezone
+from pytz import timezone
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -128,7 +128,7 @@ class EngieIndexingSetting(IndexingSetting):
                     name="Epex DAM",
                     value=value,
                     timeframe=IndexingSettingTimeframe.MONTHLY,
-                    date=datetime(calculation_date.year, calculation_date.month, 1, tzinfo=utc),
+                    date=tz_be.localize(datetime(calculation_date.year, calculation_date.month, 1)),
                     source="Engie",
                     origin=IndexingSettingOrigin.DERIVED,
                 )

@@ -112,7 +112,7 @@ class EngieIndexingSetting(IndexingSetting):
             # Tomorrow is a new month so calculate the values for EPEX DAM
             logger.info("Calculating values for EPEX DAM")
             start = calculation_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            end = tomorrow.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end = tomorrow.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
             index_values_month = IndexingSetting.query(
                 db_table=db_table,
                 source="ENTSO-E",

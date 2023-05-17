@@ -86,6 +86,7 @@ class IndexingSetting:
         origin: IndexingSettingOrigin = IndexingSettingOrigin.ORIGINAL,
     ):
         """Retrieve a single object from the database"""
+        assert date_time.tzinfo is not None and date_time is not None
         secondary = int(date_time.astimezone(utc).timestamp())
         response = db_table.get_item(Key={"primary": f"{source}#{origin.name}#{timeframe.name}#{name}", "secondary": secondary})
 

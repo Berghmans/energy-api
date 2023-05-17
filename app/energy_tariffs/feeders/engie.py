@@ -1,13 +1,13 @@
 """Module for retrieving the indexation parameters from Engie"""
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from statistics import mean
 import locale
 import logging
 
 from bs4 import BeautifulSoup
 import requests
-from pytz import utc
+from pytz import utc, timezone
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -44,11 +44,12 @@ class EngieIndexingSetting(IndexingSetting):
         index_name = cell.select_one("span.table_mobile_header p strong").text
         data_span = cell.select_one("span.table_mobile_data")
         value = data_span.get_text().strip()
+        date_time = timezone("Europe/Brussels").localize(datetime(year, convert_month(month), 1))
         return cls(
             name=index_name.replace(")", "").replace("(", ""),
             value=float(value.replace(",", ".")) if value is not None and value != "" else None,
             timeframe=IndexingSettingTimeframe.MONTHLY,
-            date=datetime(year, convert_month(month), 1, tzinfo=utc),
+            date=date_time,
             source="Engie",
             origin=IndexingSettingOrigin.ORIGINAL,
         )
@@ -81,23 +82,26 @@ class EngieIndexingSetting(IndexingSetting):
         ]
 
     @staticmethod
-    def get_gas_values(date_filter: date = None):
+    def get_gas_values(date_filter: datetime = None):
         """Scrape the GAS indexing settings from the Engie website"""
         index_values = EngieIndexingSetting.from_url(GAS_URL)
-        return [index_value for index_value in index_values if (date_filter is None or index_value.date.date() >= date_filter)]
+        return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]
 
     @staticmethod
-    def get_energy_values(date_filter: date = None):
+    def get_energy_values(date_filter: datetime = None):
         """Scrape the ENERGY indexing settings from the Engie website"""
         index_values = EngieIndexingSetting.from_url(ENERGY_URL)
-        return [index_value for index_value in index_values if (date_filter is None or index_value.date.date() >= date_filter)]
+        return [index_value for index_value in index_values if (date_filter is None or index_value.date >= date_filter)]
 
     @staticmethod
-    def calculate_derived_values(db_table, calculation_date: date = None) -> list[IndexingSetting]:
+    def calculate_derived_values(db_table, calculation_date: datetime = None) -> list[IndexingSetting]:
         """Calculate a list of derived indexing settings"""
+        tz_be = timezone("Europe/Brussels")
         indexes = []
         if calculation_date is None:
-            calculation_date = date.today()
+            calculation_date = datetime.now(tz_be)
+        else:
+            calculation_date = calculation_date.astimezone(tz_be)
 
         # EPEX DAM
         # De indexatieparameter is het rekenkundig gemiddelde van de dagelijkse quoteringen Day Ahead EPEX SPOT Belgium
@@ -105,14 +109,17 @@ class EngieIndexingSetting(IndexingSetting):
         # De waarde van EPEX DAM van de lopende maand zal pas gekend zijn aan het einde van de maand.
         tomorrow = calculation_date + timedelta(days=1)
         if tomorrow.month > calculation_date.month:
-            # Tomorrow is a now month so calculate the values for EPEX DAM
+            # Tomorrow is a new month so calculate the values for EPEX DAM
             logger.info("Calculating values for EPEX DAM")
+            start = calculation_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end = tomorrow.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             index_values_month = IndexingSetting.query(
                 db_table=db_table,
                 source="ENTSO-E",
                 name="SDAC BE",
                 timeframe=IndexingSettingTimeframe.HOURLY,
-                date_time_prefix=calculation_date.strftime("%Y-%m"),
+                start=start,
+                end=end,
             )
             if len(index_values_month) > 0:
                 # Only calculate if we found results

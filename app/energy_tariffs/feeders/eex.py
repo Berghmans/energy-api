@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, date
 
 import requests
-from pytz import utc
+from pytz import timezone
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -20,9 +20,10 @@ class EEXIndexingSetting(IndexingSetting):
     """Spot price of EEX"""
 
     @classmethod
-    def from_eex_json(cls, index_name: str, data):
+    def from_eex_json(cls, index_name: str, timezone, data):
         """Parse from the EEX JSON"""
-        date_time = datetime.strptime(data.get("tradedatetimegmt"), "%m/%d/%Y %H:%M:%S %p").replace(tzinfo=utc)
+        date_time = datetime.strptime(data.get("tradedatetimegmt"), "%m/%d/%Y %H:%M:%S %p")
+        date_time = timezone.localize(date_time)
         value = data.get("close")
         return cls(
             name=index_name.removeprefix("#E.").replace("_", " "),
@@ -34,7 +35,7 @@ class EEXIndexingSetting(IndexingSetting):
         )
 
     @staticmethod
-    def query(indexes: list[str], start: date, end: date):
+    def query(indexes: list[str], start: date, end: date, timezone):
         """Query"""
         session = requests.session()
         headers = {
@@ -67,7 +68,7 @@ class EEXIndexingSetting(IndexingSetting):
                 },
             )
             response.raise_for_status()
-            return [EEXIndexingSetting.from_eex_json(index, item) for item in response.json().get("results", {}).get("items", [])]
+            return [EEXIndexingSetting.from_eex_json(index, timezone, item) for item in response.json().get("results", {}).get("items", [])]
 
         return [
             result
@@ -79,4 +80,6 @@ class EEXIndexingSetting(IndexingSetting):
     @staticmethod
     def get_ztp_values(date_filter: date, end: date = None):
         """Get the ZTP indexes since given datefilter"""
-        return EEXIndexingSetting.query(indexes=["#E.ZTP_GTND", "#E.ZTP_GTWE"], start=date_filter, end=date.today() if end is None else end)
+        return EEXIndexingSetting.query(
+            indexes=["#E.ZTP_GTND", "#E.ZTP_GTWE"], start=date_filter, end=date.today() if end is None else end, timezone=timezone("Europe/Brussels")
+        )

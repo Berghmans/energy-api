@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import logging
 import json
 
+from pytz import utc
+
 from api.method import ApiMethod
 from api.result import ApiResult
 from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
@@ -23,6 +25,12 @@ class IndexingSettingApiMethod(ApiMethod):
     date: datetime
     timeframe: IndexingSettingTimeframe
     origin: IndexingSettingOrigin
+
+    def __post_init__(self):
+        """Post initialization"""
+        if self.date.tzinfo is None:
+            # If we got a naive date, we assume it is UTC based
+            self.date = self.date.replace(tzinfo=utc)
 
     def process(self) -> ApiResult:
         indexing_setting = IndexingSetting.load(
@@ -79,13 +87,13 @@ class IndexingSettingApiMethod(ApiMethod):
             req_origin = IndexingSettingOrigin[body.get("ORIGIN", "ORIGINAL")]
         except KeyError as exc:
             # Timeframe or Origin are not valid enum values
-            logger.info(f"Failed to parse the body {exc.args[0]}")
+            logger.warning(f"Failed to parse the body {exc.args[0]}")
             return None
 
         try:
             req_date = IndexingSettingApiMethod.parse_date(req_timeframe, body.get("DATE", None))
         except ValueError as exc:
-            logger.info(f"Failed to parse the body: {exc.args[0]}")
+            logger.warning(f"Failed to parse the body: {exc.args[0]}")
             return None
         return cls(
             db_table=db_table,

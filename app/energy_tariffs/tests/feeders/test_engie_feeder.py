@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import patch, call
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import os
 
 import requests_mock
@@ -157,14 +157,14 @@ class TestLambdaHandlerEngie(TestCase):
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]
         ) as mock_energy, patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=[]) as mock_derived:
             handler({"start": "2023/04/01"}, {})
-            self.assertEqual([call(date(2023, 4, 1))], mock_gas.mock_calls)
-            self.assertEqual([call(date(2023, 4, 1))], mock_energy.mock_calls)
+            self.assertEqual([call(datetime(2023, 4, 1, tzinfo=utc))], mock_gas.mock_calls)
+            self.assertEqual([call(datetime(2023, 4, 1, tzinfo=utc))], mock_energy.mock_calls)
             self.assertEqual([call(self.db_table, None)], mock_derived.mock_calls)
 
         with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=[]) as mock_gas, patch(
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]
         ) as mock_energy, patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=[]) as mock_derived:
             handler({"calculate": "2023/04/30"}, {})
-            self.assertEqual([call(date.today() - timedelta(days=90))], mock_gas.mock_calls)
-            self.assertEqual([call(date.today() - timedelta(days=90))], mock_energy.mock_calls)
-            self.assertEqual([call(self.db_table, date(2023, 4, 30))], mock_derived.mock_calls)
+            self.assertEqual([call(datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90))], mock_gas.mock_calls)
+            self.assertEqual([call(datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90))], mock_energy.mock_calls)
+            self.assertEqual([call(self.db_table, datetime(2023, 4, 30, tzinfo=utc))], mock_derived.mock_calls)

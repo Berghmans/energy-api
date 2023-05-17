@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import patch, call
 from pathlib import Path
-from datetime import date, datetime
+from datetime import datetime
 from statistics import mean
 import os
 
@@ -106,4 +106,6 @@ class TestLambdaHandlerEntsoe(TestCase):
 
         with patch("feeders.entsoe.EntsoeIndexingSetting.query", return_value=self.indexes) as mock:
             handler({"start": "2023/04/01", "end": "2023/04/15"}, {})
-            self.assertEqual([call(api_key="fakekey", country_code="BE", start=date(2023, 4, 1), end=date(2023, 4, 15))], mock.mock_calls)
+            self.assertEqual(
+                [call(api_key="fakekey", country_code="BE", start=datetime(2023, 4, 1, tzinfo=utc), end=datetime(2023, 4, 15, tzinfo=utc))], mock.mock_calls
+            )

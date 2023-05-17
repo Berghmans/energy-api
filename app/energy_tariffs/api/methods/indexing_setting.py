@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 import logging
 import json
 
-from pytz import utc
+from pytz import utc, timezone
+from pytz.exceptions import UnknownTimeZoneError
 
 from api.method import ApiMethod
 from api.result import ApiResult
@@ -53,13 +54,14 @@ class IndexingSettingApiMethod(ApiMethod):
         return ApiResult(400)
 
     @staticmethod
-    def parse_date(timeframe: IndexingSettingTimeframe, date_str: str) -> datetime:
+    def parse_date(timeframe: IndexingSettingTimeframe, date_str: str, tz: str) -> datetime:
         """Parse the date from the body"""
+        tz_date = timezone(tz)
         if date_str is None:
-            requested = datetime.now()
+            requested = datetime.now(tz_date)
         else:
             try:
-                requested = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
+                requested = tz_date.localize(datetime.strptime(date_str, "%Y-%m-%d %H:%M"))
             except ValueError:
                 raise ValueError(f"Could not parse date {date_str}")
 
@@ -91,9 +93,13 @@ class IndexingSettingApiMethod(ApiMethod):
             return None
 
         try:
-            req_date = IndexingSettingApiMethod.parse_date(req_timeframe, body.get("DATE", None))
+            req_tz = body.get("TZ", "UTC")
+            req_date = IndexingSettingApiMethod.parse_date(req_timeframe, body.get("DATE", None), req_tz)
         except ValueError as exc:
             logger.warning(f"Failed to parse the body: {exc.args[0]}")
+            return None
+        except UnknownTimeZoneError:
+            logger.warning("Failed to parse the body: Unknown timezone")
             return None
         return cls(
             db_table=db_table,

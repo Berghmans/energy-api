@@ -4,7 +4,7 @@ import os
 import logging
 
 import boto3
-from pytz import utc
+from pytz import utc, timezone
 
 from feeders.engie import EngieIndexingSetting
 from feeders.eex import EEXIndexingSetting
@@ -57,10 +57,11 @@ def entsoe_handler(event, _context):
         not_before = utc.localize(datetime.strptime(event["start"], "%Y/%m/%d"))
         not_after = utc.localize(datetime.strptime(event["end"], "%Y/%m/%d"))
     else:
-        now = datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        tz_be = timezone("Europe/Brussels")  # Use BE timezone as we will be fetching "BE values"
+        now = datetime.now(tz_be).replace(hour=0, minute=0, second=0, microsecond=0)
         not_before = now - timedelta(days=7)
-        not_after = now + timedelta(days=1)
-    logger.info(f"Fetching values from {not_before} to {not_after}")
+        not_after = now + timedelta(days=2)  # Also include tomorrow (so 'until' the day after tomorrow)
+    logger.info(f"Fetching values from {not_before} until {not_after}")
     api_key = EntsoeIndexingSetting.fetch_api_key(os.environ["SECRET_ARN"])
     index_values = EntsoeIndexingSetting.get_be_values(api_key=api_key, start=not_before, end=not_after)
     dynamodb = boto3.resource("dynamodb")

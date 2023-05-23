@@ -35,6 +35,21 @@ def convert_month(month: str) -> int:
     raise ValueError("Not able to translate")
 
 
+def is_holiday(day: datetime) -> bool:
+    """Check if a day is a holiday"""
+    return day in holidays.country_holidays(country="BE", years=day.year) or day in holidays.country_holidays(country="NL", years=day.year)
+
+
+def get_last_weekday(day: datetime) -> datetime:
+    """Get the last weekday that is not a holiday"""
+    day_before = day - timedelta(days=1)
+    if day_before.weekday() > 4:
+        return get_last_weekday(day_before)
+    if is_holiday(day_before):
+        return get_last_weekday(day_before)
+    return day_before
+
+
 @dataclass
 class EngieIndexingSetting(IndexingSetting):
     """Indexing Setting class for Engie"""
@@ -101,8 +116,8 @@ class EngieIndexingSetting(IndexingSetting):
         indexes = []
         if calculation_date is None:
             calculation_date = datetime.now(tz_be)
-        else:
-            calculation_date = calculation_date.astimezone(tz_be)
+        elif calculation_date.tzinfo is None:
+            calculation_date = tz_be.localize(calculation_date)
 
         # EPEX DAM
         # De indexatieparameter is het rekenkundig gemiddelde van de dagelijkse quoteringen Day Ahead EPEX SPOT Belgium
@@ -177,6 +192,8 @@ class EngieIndexingSetting(IndexingSetting):
             start=start,
             end=end,
         )
+        if len(ztp_weekends) == 0 or len(ztp_days) == 0:
+            return None
 
         def get_ztp_value_for_day(day: datetime) -> float:
             """Get the ZTP value for a given day"""
@@ -187,17 +204,9 @@ class EngieIndexingSetting(IndexingSetting):
                         logger.debug(f"Found ZTP GTND value for day {day}: {ztp_day.value}")
                         return ztp_day.value
 
-            if day.weekday() > 4:
-                # A weekend day so we need ZTP Weekend
-                friday = day - timedelta(days=day.weekday() - 4)
-                for ztp_weekend in ztp_weekends:
-                    if ztp_weekend.date == friday:
-                        logger.debug(f"Found ZTP GTWE value for day {day} from {ztp_weekend.date}: {ztp_weekend.value}")
-                        return ztp_weekend.value
-
-            if day in holidays.country_holidays(country="BE", years=day.year):
-                # A holiday so we need ZTP Weekend
-                day_before = day - timedelta(days=1)
+            if day.weekday() > 4 or is_holiday(day):
+                # A weekend day or holiday so we need ZTP Weekend
+                day_before = get_last_weekday(day)
                 for ztp_weekend in ztp_weekends:
                     if ztp_weekend.date == day_before:
                         logger.debug(f"Found ZTP GTWE value for day {day} from {ztp_weekend.date}: {ztp_weekend.value}")

@@ -5,6 +5,7 @@ from unittest.mock import patch, call
 from pathlib import Path
 from datetime import datetime, timedelta
 import os
+import csv
 
 import requests_mock
 from moto import mock_dynamodb
@@ -12,7 +13,7 @@ from pytz import utc, timezone
 
 from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL, convert_month
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe
+from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting
 from lambda_feeder import engie_handler as handler
 from tests.creators import create_dynamodb_table
 
@@ -22,6 +23,13 @@ def mock_url(mock, url: str, file_name: str):
     with (Path(__file__).parent / "data" / file_name).open(mode="r", encoding="utf-8") as file_handle:
         html_text = file_handle.read()
     mock.get(url, text=html_text)
+
+
+def read_eex_csv(file_name: str):
+    """Read indexing settings from a CSV file"""
+    with (Path(__file__).parent / "data" / file_name).open(mode="r", encoding="utf-8") as file_handle:
+        reader = csv.DictReader(file_handle)
+        return [IndexingSetting._from_ddb_json(row) for row in reader]
 
 
 @requests_mock.Mocker()
@@ -90,12 +98,15 @@ class TestEngieIndexingSetting(TestCase):
         start = tz_be.localize(datetime(2023, 4, 1))
         end = tz_be.localize(datetime(2023, 5, 1))
         indexes = EntsoeIndexingSetting.get_be_values(api_key="key", start=start, end=end)
-        EntsoeIndexingSetting.save_list(self.db_table, indexes)
+        IndexingSetting.save_list(self.db_table, indexes)
+        IndexingSetting.save_list(self.db_table, read_eex_csv("eex_202304.csv"))
 
         indexes = EngieIndexingSetting.calculate_derived_values(self.db_table, calculation_date=tz_be.localize(datetime(2023, 4, 30)))
-        self.assertEqual(1, len(indexes))
+        self.assertEqual(2, len(indexes))
         self.assertEqual("Epex DAM", indexes[0].name)
         self.assertEqual(105.53, indexes[0].value)
+        self.assertEqual("ZTP DAM", indexes[1].name)
+        self.assertEqual(41.39, indexes[1].value)
 
         with patch("feeders.engie.IndexingSetting.query", return_value=[]):
             indexes = EngieIndexingSetting.calculate_derived_values(self.db_table)

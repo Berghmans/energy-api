@@ -214,12 +214,16 @@ class EngieIndexingSetting(IndexingSetting):
 
             raise ValueError(f"No ZTP value found for day {day}")
 
-        month_values = [get_ztp_value_for_day(calculation_date.replace(day=day + 1)) for day in range(end.day)]
-        return EngieIndexingSetting(
-            name="ZTP DAM",
-            value=round(mean(month_values), 2),
-            timeframe=IndexingSettingTimeframe.MONTHLY,
-            date=tz_be.localize(datetime(calculation_date.year, calculation_date.month, 1)),
-            source="Engie",
-            origin=IndexingSettingOrigin.DERIVED,
-        )
+        try:
+            month_values = [get_ztp_value_for_day(calculation_date.replace(day=day + 1)) for day in range(end.day)]
+            return EngieIndexingSetting(
+                name="ZTP DAM",
+                value=round(mean(month_values), 2),
+                timeframe=IndexingSettingTimeframe.MONTHLY,
+                date=tz_be.localize(datetime(calculation_date.year, calculation_date.month, 1)),
+                source="Engie",
+                origin=IndexingSettingOrigin.DERIVED,
+            )
+        except ValueError as exc:
+            logger.error(exc.args[0])
+            return None

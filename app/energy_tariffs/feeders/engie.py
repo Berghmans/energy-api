@@ -8,6 +8,7 @@ import logging
 from bs4 import BeautifulSoup
 import requests
 from pytz import timezone
+import holidays
 
 from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
@@ -32,6 +33,21 @@ def convert_month(month: str) -> int:
             pass
     locale.setlocale(locale.LC_ALL, original)
     raise ValueError("Not able to translate")
+
+
+def is_holiday(day: datetime) -> bool:
+    """Check if a day is a holiday"""
+    return day in holidays.country_holidays(country="BE", years=day.year) or day in holidays.country_holidays(country="NL", years=day.year)
+
+
+def get_last_weekday(day: datetime) -> datetime:
+    """Get the last weekday that is not a holiday"""
+    day_before = day - timedelta(days=1)
+    if day_before.weekday() > 4:
+        return get_last_weekday(day_before)
+    if is_holiday(day_before):
+        return get_last_weekday(day_before)
+    return day_before
 
 
 @dataclass
@@ -100,8 +116,8 @@ class EngieIndexingSetting(IndexingSetting):
         indexes = []
         if calculation_date is None:
             calculation_date = datetime.now(tz_be)
-        else:
-            calculation_date = calculation_date.astimezone(tz_be)
+        elif calculation_date.tzinfo is None:
+            calculation_date = tz_be.localize(calculation_date)
 
         # EPEX DAM
         # De indexatieparameter is het rekenkundig gemiddelde van de dagelijkse quoteringen Day Ahead EPEX SPOT Belgium
@@ -110,29 +126,104 @@ class EngieIndexingSetting(IndexingSetting):
         tomorrow = calculation_date + timedelta(days=1)
         if tomorrow.month > calculation_date.month:
             # Tomorrow is a new month so calculate the values for EPEX DAM
-            logger.info("Calculating values for EPEX DAM")
-            start = calculation_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            end = tomorrow.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
-            index_values_month = IndexingSetting.query(
-                db_table=db_table,
-                source="ENTSO-E",
-                name="SDAC BE",
-                timeframe=IndexingSettingTimeframe.HOURLY,
-                start=start,
-                end=end,
-            )
-            if len(index_values_month) > 0:
-                # Only calculate if we found results
-                value = round(mean(index.value for index in index_values_month), 2)
-                epex_dam = EngieIndexingSetting(
-                    name="Epex DAM",
-                    value=value,
-                    timeframe=IndexingSettingTimeframe.MONTHLY,
-                    date=tz_be.localize(datetime(calculation_date.year, calculation_date.month, 1)),
-                    source="Engie",
-                    origin=IndexingSettingOrigin.DERIVED,
-                )
-                logger.info(f"EPEX DAM: {value} (records: {len(index_values_month)})")
+            epex_dam = EngieIndexingSetting._calculate_epex_dam(db_table, calculation_date, tz_be, tomorrow)
+            if epex_dam is not None:
                 indexes.append(epex_dam)
 
+            # Calculate the values for ZTP DAM
+            ztp_dam = EngieIndexingSetting._calculate_ztp_dam(db_table, calculation_date, tz_be, tomorrow)
+            if ztp_dam is not None:
+                indexes.append(ztp_dam)
+
         return indexes
+
+    @staticmethod
+    def _calculate_epex_dam(db_table, calculation_date, tz_be, tomorrow):
+        """Calculate the EPEX DAM derived indexing setting"""
+        logger.info("Calculating values for EPEX DAM")
+        start = calculation_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = tomorrow.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
+        index_values_month = IndexingSetting.query(
+            db_table=db_table,
+            source="ENTSO-E",
+            name="SDAC BE",
+            timeframe=IndexingSettingTimeframe.HOURLY,
+            start=start,
+            end=end,
+        )
+        if len(index_values_month) > 0:
+            # Only calculate if we found results
+            value = round(mean(index.value for index in index_values_month), 2)
+            epex_dam = EngieIndexingSetting(
+                name="Epex DAM",
+                value=value,
+                timeframe=IndexingSettingTimeframe.MONTHLY,
+                date=tz_be.localize(datetime(calculation_date.year, calculation_date.month, 1)),
+                source="Engie",
+                origin=IndexingSettingOrigin.DERIVED,
+            )
+            logger.info(f"EPEX DAM: {value} (records: {len(index_values_month)})")
+            return epex_dam
+        return None
+
+    @staticmethod
+    def _calculate_ztp_dam(db_table, calculation_date, tz_be, tomorrow):
+        """Calculate the ZTP DAM derived indexing setting"""
+        logger.info("Calculating values for ZTP DAM")
+        # start is 7 dyas before the beginning of this month so we make sure
+        # we have the weekend values if the month starts with a weekend
+        start = calculation_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=7)
+        end = tomorrow.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(seconds=1)
+        ztp_weekends = IndexingSetting.query(
+            db_table=db_table,
+            source="EEX",
+            name="ZTP GTWE",
+            origin=IndexingSettingOrigin.ORIGINAL,
+            timeframe=IndexingSettingTimeframe.DAILY,
+            start=start,
+            end=end,
+        )
+        ztp_days = IndexingSetting.query(
+            db_table=db_table,
+            source="EEX",
+            name="ZTP GTND",
+            origin=IndexingSettingOrigin.ORIGINAL,
+            timeframe=IndexingSettingTimeframe.DAILY,
+            start=start,
+            end=end,
+        )
+        if len(ztp_weekends) == 0 or len(ztp_days) == 0:
+            return None
+
+        def get_ztp_value_for_day(day: datetime) -> float:
+            """Get the ZTP value for a given day"""
+            if day.weekday() <= 4:
+                # A week day so we need ZTP Next Day
+                for ztp_day in ztp_days:
+                    if ztp_day.date == day:
+                        logger.debug(f"Found ZTP GTND value for day {day}: {ztp_day.value}")
+                        return ztp_day.value
+
+            if day.weekday() > 4 or is_holiday(day):
+                # A weekend day or holiday so we need ZTP Weekend
+                day_before = get_last_weekday(day)
+                for ztp_weekend in ztp_weekends:
+                    if ztp_weekend.date == day_before:
+                        logger.debug(f"Found ZTP GTWE value for day {day} from {ztp_weekend.date}: {ztp_weekend.value}")
+                        return ztp_weekend.value
+
+            raise ValueError(f"No ZTP value found for day {day}")
+
+        try:
+            month_values = [get_ztp_value_for_day(calculation_date.replace(day=day + 1)) for day in range(end.day)]
+            return EngieIndexingSetting(
+                name="ZTP DAM",
+                value=round(mean(month_values), 2),
+                timeframe=IndexingSettingTimeframe.MONTHLY,
+                date=tz_be.localize(datetime(calculation_date.year, calculation_date.month, 1)),
+                source="Engie",
+                origin=IndexingSettingOrigin.DERIVED,
+            )
+        except ValueError as exc:
+            logger.error(exc.args[0])
+            return None

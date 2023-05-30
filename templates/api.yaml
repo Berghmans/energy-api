@@ -232,17 +232,20 @@ Resources:
         Engie:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: "rate(12 hours)"
+            ScheduleExpression: "cron(5 1,19 * * ? *)"
+            ScheduleExpressionTimezone: Europe/Brussels
             Input: '{"feed": "engie"}'
         EEX:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: "rate(1 day)"
+            ScheduleExpression: "cron(5 1,18 * * ? *)"
+            ScheduleExpressionTimezone: Europe/Brussels
             Input: '{"feed": "eex"}'
         Entsoe:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: "rate(12 hours)"
+            ScheduleExpression: "cron(5 0/7 * * ? *)"
+            ScheduleExpressionTimezone: Europe/Brussels
             Input: '{"feed": "entsoe"}'
 
   LambdaFeederLogs:

@@ -117,10 +117,3 @@ class IndexingSetting:
             KeyConditionExpression=key_condition,
         )
         return [IndexingSetting._from_ddb_json(object) for object in response.get("Items", [])]
-
-
-DAILY = IndexingSettingTimeframe.DAILY
-HOURLY = IndexingSettingTimeframe.HOURLY
-MONTHLY = IndexingSettingTimeframe.MONTHLY
-ORIGINAL = IndexingSettingOrigin.ORIGINAL
-DERIVED = IndexingSettingOrigin.DERIVED

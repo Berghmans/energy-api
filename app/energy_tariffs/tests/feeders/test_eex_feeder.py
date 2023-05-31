@@ -11,7 +11,7 @@ from moto import mock_dynamodb
 from pytz import utc
 
 from feeders.eex import EEXIndexingSetting, EEX_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe
+from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSettingDocumentation
 from lambda_feeder import eex_handler as handler
 from tests.creators import create_dynamodb_table
 
@@ -74,7 +74,8 @@ class TestLambdaHandlerEngie(TestCase):
             os.environ["TABLE_NAME"] = self.db_table.name
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})
-            self.assertEqual(1, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(2, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(1, len(IndexingSettingDocumentation.query(self.db_table)))
 
         with patch("feeders.eex.EEXIndexingSetting.get_ztp_values", return_value=self.gas_indexes) as mock:
             handler({"start": "2023/04/01", "end": "2023/04/30"}, {})

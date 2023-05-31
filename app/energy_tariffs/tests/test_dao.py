@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from moto import mock_dynamodb
 from pytz import utc
 
-from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
+from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin, IndexingSettingDocumentation, DaoDynamoDB
 from tests.creators import create_dynamodb_table
 
 
@@ -135,3 +135,58 @@ class TestIndexingSetting(TestCase):
             end=datetime(2023, 4, 1, 0, 0, 0, tzinfo=utc),
         )
         self.assertEqual(3, len(objects))
+
+
+@mock_dynamodb
+class TestIndexingSettingDocumentation(TestCase):
+    """Test class for IndexingSetting"""
+
+    def setUp(self):
+        """Set up the test"""
+        self.db_table = create_dynamodb_table()
+        self.index_obj = IndexingSettingDocumentation(
+            name="index1", timeframe=IndexingSettingTimeframe.HOURLY, source="src", origin=IndexingSettingOrigin.ORIGINAL
+        )
+
+    def test_save(self):
+        """Test the save method"""
+        self.index_obj.save(self.db_table)
+        response = self.db_table.get_item(
+            Key={
+                "primary": "indexingsettingdoc",
+                "secondary": hash(self.index_obj),
+            }
+        )
+        self.assertIn("Item", response)
+        self.assertIn("primary", response["Item"])
+        self.assertIn("secondary", response["Item"])
+        self.assertIn("last_updated", response["Item"])
+        self.assertEqual("index1", response["Item"]["name"])
+
+    def test_save_list(self):
+        """Test the save_list method"""
+        obj2 = IndexingSettingDocumentation(name="index1", timeframe=IndexingSettingTimeframe.HOURLY, source="src2", origin=IndexingSettingOrigin.ORIGINAL)
+        IndexingSettingDocumentation.save_list(self.db_table, [self.index_obj, obj2])
+        self.assertEqual(2, len(IndexingSettingDocumentation.query(self.db_table)))
+
+    def test_query(self):
+        """Test the query method"""
+        self.index_obj.save(self.db_table)
+        IndexingSettingDocumentation(name="index1", timeframe=IndexingSettingTimeframe.HOURLY, source="src2", origin=IndexingSettingOrigin.ORIGINAL).save(
+            self.db_table
+        )
+        IndexingSettingDocumentation(name="index1", timeframe=IndexingSettingTimeframe.HOURLY, source="src2", origin=IndexingSettingOrigin.ORIGINAL).save(
+            self.db_table
+        )
+        objects = IndexingSettingDocumentation.query(self.db_table)
+        self.assertEqual(2, len(objects))
+
+
+@mock_dynamodb
+class TestDaoDynamoDB(TestCase):
+    """Test class for DaoDynamoDB"""
+
+    def test_not_implemented(self):
+        """Test the methods to be implemented"""
+        self.assertRaises(NotImplementedError, DaoDynamoDB._from_ddb_json, {})
+        self.assertRaises(NotImplementedError, DaoDynamoDB()._to_ddb_json)

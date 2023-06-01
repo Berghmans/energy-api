@@ -31,6 +31,9 @@ class IndexingSettingsApiMethod(ApiMethod):
     def from_body(cls, db_table, body: dict):
         """Create the object from a HTTP request body"""
         logger.info(f"Creating the {cls.__name__} method for body {json.dumps(body)}")
+        if len(body) == 0:
+            return None
+
         index_requests = {key: IndexingSettingApiMethod.from_body(db_table, index_request) for key, index_request in body.items()}
 
         if any(request is None for request in index_requests.values()):

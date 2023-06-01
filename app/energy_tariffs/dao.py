@@ -3,6 +3,8 @@ from __future__ import annotations
 from enum import Enum, auto
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import hashlib
+import json
 
 from pytz import utc
 from boto3.dynamodb.conditions import Key
@@ -175,15 +177,24 @@ class IndexingSettingDocumentation(DaoDynamoDB):
 
     def _to_ddb_json(self):
         """Convert the current object to a JSON for storing in dynamodb"""
-        secondary = hash(self)
         return {
             **asdict(self),
-            "primary": "indexingsettingdoc",
-            "secondary": secondary,
             "timeframe": self.timeframe.name,
             "origin": self.origin.name,
+            "primary": "indexingsettingdoc",
+            "secondary": self._ddb_hash(),
             "last_updated": datetime.now(utc).strftime("%Y-%m-%d %H:%M:%S"),
         }
+
+    def _ddb_hash(self):
+        """Get a hash for dynamodb"""
+        data = {
+            **asdict(self),
+            "timeframe": self.timeframe.name,
+            "origin": self.origin.name,
+        }
+        secondary_int = int(hashlib.sha1(json.dumps(data, sort_keys=True).encode("UTF-8")).hexdigest()[-16:], 16)
+        return secondary_int
 
     @classmethod
     def _from_ddb_json(cls, data):

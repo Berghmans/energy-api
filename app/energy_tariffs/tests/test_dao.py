@@ -148,13 +148,22 @@ class TestIndexingSettingDocumentation(TestCase):
             name="index1", timeframe=IndexingSettingTimeframe.HOURLY, source="src", origin=IndexingSettingOrigin.ORIGINAL
         )
 
+    def test_hash(self):
+        """Test the hash function"""
+        obj2 = IndexingSettingDocumentation(name="index1", timeframe=IndexingSettingTimeframe.HOURLY, source="src", origin=IndexingSettingOrigin.ORIGINAL)
+        self.assertEqual(self.index_obj._ddb_hash(), obj2._ddb_hash())
+        self.index_obj.save(self.db_table)
+        objects = IndexingSettingDocumentation.query(self.db_table)
+        self.assertEqual(1, len(objects))
+        self.assertEqual(self.index_obj._ddb_hash(), objects[0]._ddb_hash())
+
     def test_save(self):
         """Test the save method"""
         self.index_obj.save(self.db_table)
         response = self.db_table.get_item(
             Key={
                 "primary": "indexingsettingdoc",
-                "secondary": hash(self.index_obj),
+                "secondary": 8811099134060710542,
             }
         )
         self.assertIn("Item", response)

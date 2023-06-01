@@ -1,7 +1,5 @@
 """Test module for API classes"""
 from __future__ import annotations
-from dataclasses import asdict
-from unittest import TestCase
 from datetime import datetime
 
 from moto import mock_dynamodb
@@ -10,86 +8,69 @@ from pytz import utc
 from api.methods.indexing_setting import IndexingSettingApiMethod
 from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 from tests.creators import create_dynamodb_table
+from tests.api_methods import TestCaseApiMethod
 
 
 @mock_dynamodb
-class TestIndexingSettingApiMethod(TestCase):
+class TestIndexingSettingApiMethod(TestCaseApiMethod):
     """Test class for IndexingSettingApiMethod"""
 
     def setUp(self):
         """Set up the test"""
         self.db_table = create_dynamodb_table()
+        self.load_db(self.db_table, "db_indexingsettings.json")
         self.index_name = "index1"
         self.index_timeframe = IndexingSettingTimeframe.MONTHLY
         self.index_datetime = datetime(2023, 5, 1, 0, 0, 0, tzinfo=utc)
         self.index_source = "src"
         self.index_origin = IndexingSettingOrigin.ORIGINAL
         self.index_value = 1.1
-        self.index_obj = IndexingSetting(
-            self.index_name,
-            self.index_value,
-            self.index_timeframe,
-            self.index_datetime,
-            self.index_source,
-            self.index_origin,
-        )
-        self.index_obj.save(self.db_table)
         self.assertIsNotNone(IndexingSetting.load(self.db_table, self.index_source, self.index_name, self.index_timeframe, self.index_datetime))
 
     def test_from_body_invalid(self):
         """Test the from_body method with invalid input"""
-        self.assertIsNone(IndexingSettingApiMethod.from_body(None, {}))
-        self.assertIsNone(
-            IndexingSettingApiMethod.from_body(
-                None,
-                {
-                    "INDEX": "index1",
-                    "SOURCE": "src",
-                    "DATE": "somedate",
-                },
-            )
+        self.assertBodyInvalid(IndexingSettingApiMethod, {})
+        self.assertBodyInvalid(
+            IndexingSettingApiMethod,
+            {
+                "INDEX": "index1",
+                "SOURCE": "src",
+                "DATE": "somedate",
+            },
         )
-        self.assertIsNone(
-            IndexingSettingApiMethod.from_body(
-                None,
-                {
-                    "INDEX": "index1",
-                    "SOURCE": "src",
-                    "TIMEFRAME": "badvalue",
-                },
-            )
+        self.assertBodyInvalid(
+            IndexingSettingApiMethod,
+            {
+                "INDEX": "index1",
+                "SOURCE": "src",
+                "TIMEFRAME": "badvalue",
+            },
         )
-        self.assertIsNone(
-            IndexingSettingApiMethod.from_body(
-                None,
-                {
-                    "INDEX": "index1",
-                    "SOURCE": "src",
-                    "ORIGIN": "badvalue",
-                },
-            )
+        self.assertBodyInvalid(
+            IndexingSettingApiMethod,
+            {
+                "INDEX": "index1",
+                "SOURCE": "src",
+                "ORIGIN": "badvalue",
+            },
         )
 
     def test_from_body_valid(self):
         """Test the from_body method"""
-        self.assertIsNotNone(
-            IndexingSettingApiMethod.from_body(
-                None,
-                {
-                    "INDEX": "index1",
-                    "SOURCE": "src",
-                    "DATE": "2023-05-01 00:00",
-                },
-            )
+        self.assertBodyValid(
+            IndexingSettingApiMethod,
+            {
+                "INDEX": "index1",
+                "SOURCE": "src",
+                "DATE": "2023-05-01 00:00",
+            },
         )
-        self.assertIsNotNone(
-            IndexingSettingApiMethod.from_body(
-                None,
-                {
-                    "INDEX": "index1",
-                    "SOURCE": "src",
-                },
-            )
+        self.assertBodyValid(
+            IndexingSettingApiMethod,
+            {
+                "INDEX": "index1",
+                "SOURCE": "src",
+            },
         )
 
     def test_process(self):
@@ -102,10 +83,15 @@ class TestIndexingSettingApiMethod(TestCase):
             timeframe=IndexingSettingTimeframe.MONTHLY,
             origin=IndexingSettingOrigin.ORIGINAL,
         )
-        result = method.process()
-        self.assertEqual(200, result.status_code)
-        expected = {**asdict(self.index_obj), "timeframe": self.index_timeframe.name, "origin": self.index_origin.name}
-        self.assertEqual(expected, result.body)
+        expected = {
+            "name": self.index_name,
+            "value": self.index_value,
+            "date": self.index_datetime,
+            "source": self.index_source,
+            "timeframe": self.index_timeframe.name,
+            "origin": self.index_origin.name,
+        }
+        self.assertProcess(method, 200, expected)
 
     def test_from_body_monthly(self):
         """Test the from_body method"""
@@ -113,9 +99,6 @@ class TestIndexingSettingApiMethod(TestCase):
             self.db_table,
             {"INDEX": self.index_name, "SOURCE": self.index_source, "DATE": "2023-06-01 10:00", "TIMEFRAME": "MONTHLY", "ORIGIN": "ORIGINAL"},
         )
-        self.assertIsNotNone(method)
-        result = method.process()
-        self.assertEqual(200, result.status_code)
         expected = {
             "name": self.index_name,
             "source": self.index_source,
@@ -124,7 +107,7 @@ class TestIndexingSettingApiMethod(TestCase):
             "timeframe": "MONTHLY",
             "origin": "ORIGINAL",
         }
-        self.assertEqual(expected, result.body)
+        self.assertProcess(method, 200, expected)
 
     def test_from_body_hourly(self):
         """Test the from_body method"""
@@ -140,9 +123,6 @@ class TestIndexingSettingApiMethod(TestCase):
             self.db_table,
             {"INDEX": self.index_name, "SOURCE": self.index_source, "DATE": "2023-05-01 10:00", "TIMEFRAME": "HOURLY", "ORIGIN": "DERIVED"},
         )
-        self.assertIsNotNone(method)
-        result = method.process()
-        self.assertEqual(200, result.status_code)
         expected = {
             "name": self.index_name,
             "source": self.index_source,
@@ -151,10 +131,15 @@ class TestIndexingSettingApiMethod(TestCase):
             "timeframe": "HOURLY",
             "origin": "DERIVED",
         }
-        self.assertEqual(expected, result.body)
+        self.assertProcess(method, 200, expected)
 
     def test_from_body_daily(self):
         """Test the from_body method"""
+        # DAILY is not implemented yet so we expect failing parsing the body
+        self.assertBodyInvalid(
+            IndexingSettingApiMethod,
+            {"INDEX": self.index_name, "SOURCE": self.index_source, "DATE": "2023-05-01 10:00", "TIMEFRAME": "DAILY", "ORIGIN": "DERIVED"},
+        )
         IndexingSetting(
             self.index_name,
             self.index_value,
@@ -163,11 +148,11 @@ class TestIndexingSettingApiMethod(TestCase):
             self.index_source,
             IndexingSettingOrigin.DERIVED,
         ).save(self.db_table)
-        method = IndexingSettingApiMethod.from_body(
-            self.db_table,
+        # Even after we save information in the database
+        self.assertBodyInvalid(
+            IndexingSettingApiMethod,
             {"INDEX": self.index_name, "SOURCE": self.index_source, "DATE": "2023-05-01 10:00", "TIMEFRAME": "DAILY", "ORIGIN": "DERIVED"},
         )
-        self.assertIsNone(method)
 
     def test_process_not_existing(self):
         """Test the process method for a not existing indexingsetting"""
@@ -179,6 +164,4 @@ class TestIndexingSettingApiMethod(TestCase):
             timeframe=IndexingSettingTimeframe.MONTHLY,
             origin=IndexingSettingOrigin.ORIGINAL,
         )
-        result = method.process()
-        self.assertEqual(400, result.status_code)
-        self.assertEqual({}, result.body)
+        self.assertProcess(method, 400, {})

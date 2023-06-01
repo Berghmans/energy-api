@@ -75,6 +75,8 @@ class TestApi(TestCase):
         self.assertIsNotNone(api.parse({**self.valid_request, "path": f"{self.base_path}/endprice", "body": json.dumps(body)}))
         # /endprices
         self.assertIsNotNone(api.parse({**self.valid_request, "path": f"{self.base_path}/endprices", "body": json.dumps({"q1": body})}))
+        # /list
+        self.assertIsNotNone(api.parse({"httpMethod": "GET", "path": f"{self.base_path}/list", "body": json.dumps({})}))
 
     def test_non_existing_method(self):
         """Test an non-existing API method"""

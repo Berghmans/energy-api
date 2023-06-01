@@ -3,9 +3,59 @@ from __future__ import annotations
 from enum import Enum, auto
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import hashlib
+import json
 
 from pytz import utc
 from boto3.dynamodb.conditions import Key
+
+
+class DaoDynamoDB:
+    """Class that implements loading from and saving to dynamodb"""
+
+    def save(self, db_table):
+        """Save the object to the dynamodb database"""
+        db_table.put_item(Item=self._to_ddb_json())
+
+    @staticmethod
+    def save_list(db_table, objects: list[DaoDynamoDB]):
+        with db_table.batch_writer() as batch:
+            for object in objects:
+                batch.put_item(Item=object._to_ddb_json())
+
+    def _to_ddb_json(self):
+        """Convert the current object to a JSON for storing in dynamodb"""
+        raise NotImplementedError("Method form converting object to DynamoDB JSON not implemented")
+
+    @classmethod
+    def _from_ddb_json(cls, data):
+        """Parse the JSON from dynamodb and create the object"""
+        raise NotImplementedError("Method form converting DynamoDB JSON to object not implemented")
+
+    @classmethod
+    def load_key(
+        cls,
+        db_table,
+        primary: str,
+        secondary: int,
+    ):
+        """Retrieve a single object from the database"""
+        response = db_table.get_item(Key={"primary": primary, "secondary": secondary})
+
+        if "Item" in response:
+            return cls._from_ddb_json(response["Item"])
+
+    @staticmethod
+    def query_condition(
+        db_table,
+        condition,
+    ) -> list[dict]:
+        """Query all objects in the database"""
+        response = db_table.query(
+            Select="ALL_ATTRIBUTES",
+            KeyConditionExpression=condition,
+        )
+        return response.get("Items", [])
 
 
 class IndexingSettingOrigin(Enum):
@@ -24,7 +74,7 @@ class IndexingSettingTimeframe(Enum):
 
 
 @dataclass
-class IndexingSetting:
+class IndexingSetting(DaoDynamoDB):
     """Class that represents an indexing setting"""
 
     name: str  # The name of the index
@@ -40,13 +90,13 @@ class IndexingSetting:
 
     def save(self, db_table):
         """Save the object to the dynamodb database"""
-        db_table.put_item(Item=self._to_ddb_json())
+        super().save(db_table)
+        self.doc().save(db_table)
 
     @staticmethod
     def save_list(db_table, objects: list[IndexingSetting]):
-        with db_table.batch_writer() as batch:
-            for object in objects:
-                batch.put_item(Item=object._to_ddb_json())
+        docs = {obj.doc() for obj in objects}
+        DaoDynamoDB.save_list(db_table=db_table, objects=objects + list(docs))
 
     def _to_ddb_json(self):
         """Convert the current object to a JSON for storing in dynamodb"""
@@ -88,10 +138,7 @@ class IndexingSetting:
         """Retrieve a single object from the database"""
         assert date_time.tzinfo is not None and date_time is not None
         secondary = int(date_time.astimezone(utc).timestamp())
-        response = db_table.get_item(Key={"primary": f"{source}#{origin.name}#{timeframe.name}#{name}", "secondary": secondary})
-
-        if "Item" in response:
-            return cls._from_ddb_json(response["Item"])
+        return IndexingSetting.load_key(db_table=db_table, primary=f"{source}#{origin.name}#{timeframe.name}#{name}", secondary=secondary)
 
     @staticmethod
     def query(
@@ -112,15 +159,57 @@ class IndexingSetting:
         if start is not None and end is not None:
             key_condition = key_condition & Key("secondary").between(int(start.astimezone(utc).timestamp()), int(end.astimezone(utc).timestamp()))
 
-        response = db_table.query(
-            Select="ALL_ATTRIBUTES",
-            KeyConditionExpression=key_condition,
+        return [IndexingSetting._from_ddb_json(object) for object in DaoDynamoDB.query_condition(db_table=db_table, condition=key_condition)]
+
+    def doc(self) -> IndexingSettingDocumentation:
+        """Generate the documentation"""
+        return IndexingSettingDocumentation(name=self.name, timeframe=self.timeframe, source=self.source, origin=self.origin)
+
+
+@dataclass(frozen=True, eq=True)
+class IndexingSettingDocumentation(DaoDynamoDB):
+    """A class representing documentation about the indexing setting in the database"""
+
+    name: str
+    timeframe: IndexingSettingTimeframe
+    source: str
+    origin: IndexingSettingOrigin
+
+    def _to_ddb_json(self):
+        """Convert the current object to a JSON for storing in dynamodb"""
+        return {
+            **asdict(self),
+            "timeframe": self.timeframe.name,
+            "origin": self.origin.name,
+            "primary": "indexingsettingdoc",
+            "secondary": self._ddb_hash(),
+            "last_updated": datetime.now(utc).strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+    def _ddb_hash(self):
+        """Get a hash for dynamodb"""
+        data = {
+            **asdict(self),
+            "timeframe": self.timeframe.name,
+            "origin": self.origin.name,
+        }
+        secondary_int = int(hashlib.sha1(json.dumps(data, sort_keys=True).encode("UTF-8")).hexdigest()[-16:], 16)
+        return secondary_int
+
+    @classmethod
+    def _from_ddb_json(cls, data):
+        """Parse the JSON from dynamodb and create the object"""
+        return cls(
+            name=data.get("name"),
+            timeframe=IndexingSettingTimeframe[data.get("timeframe")],
+            source=data.get("source"),
+            origin=IndexingSettingOrigin[data.get("origin")],
         )
-        return [IndexingSetting._from_ddb_json(object) for object in response.get("Items", [])]
 
-
-DAILY = IndexingSettingTimeframe.DAILY
-HOURLY = IndexingSettingTimeframe.HOURLY
-MONTHLY = IndexingSettingTimeframe.MONTHLY
-ORIGINAL = IndexingSettingOrigin.ORIGINAL
-DERIVED = IndexingSettingOrigin.DERIVED
+    @staticmethod
+    def query(
+        db_table,
+    ) -> list[IndexingSettingDocumentation]:
+        """Query all objects in the database from the same campaign"""
+        key_condition = Key("primary").eq("indexingsettingdoc")
+        return [IndexingSettingDocumentation._from_ddb_json(object) for object in DaoDynamoDB.query_condition(db_table=db_table, condition=key_condition)]

@@ -1,0 +1,95 @@
+[
+    {
+        "name": "index1",
+        "value": "1.1",
+        "timeframe": "MONTHLY",
+        "date": "2023-05-01 00:00:00",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "src#ORIGINAL#MONTHLY#index1",
+        "secondary": "1682899200",
+        "last_updated": "2023-06-01 07:53:54"
+    },
+    {
+        "name": "index1",
+        "value": "1.0",
+        "timeframe": "MONTHLY",
+        "date": "2023-04-01 00:00:00",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "src#ORIGINAL#MONTHLY#index1",
+        "secondary": "1680307200",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index1",
+        "value": "1.5",
+        "timeframe": "MONTHLY",
+        "date": "2023-03-01 00:00:00",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "src#ORIGINAL#MONTHLY#index1",
+        "secondary": "1677628800",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index1",
+        "timeframe": "MONTHLY",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "indexingsettingdoc",
+        "secondary": "11626881252034433656",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index2",
+        "timeframe": "HOURLY",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "indexingsettingdoc",
+        "secondary": "9701479151722212606",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index3",
+        "timeframe": "MONTHLY",
+        "source": "src",
+        "origin": "DERIVED",
+        "primary": "indexingsettingdoc",
+        "secondary": "15066944499133279741",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index2",
+        "value": "1.5",
+        "timeframe": "HOURLY",
+        "date": "2023-03-01 13:00:00",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "src#ORIGINAL#HOURLY#index2",
+        "secondary": "1677675600",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index2",
+        "value": "1.5",
+        "timeframe": "HOURLY",
+        "date": "2023-03-01 14:00:00",
+        "source": "src",
+        "origin": "ORIGINAL",
+        "primary": "src#ORIGINAL#HOURLY#index2",
+        "secondary": "1677679200",
+        "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "name": "index3",
+        "value": "1.0",
+        "timeframe": "MONTHLY",
+        "date": "2023-04-01 00:00:00",
+        "source": "src",
+        "origin": "DERIVED",
+        "primary": "src#DERIVED#MONTHLY#index3",
+        "secondary": "1680307200",
+        "last_updated": "2023-06-01 08:55:02"
+    }
+]

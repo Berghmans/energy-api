@@ -13,7 +13,7 @@ from pytz import utc, timezone
 
 from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL, convert_month
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting
+from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting, IndexingSettingDocumentation
 from lambda_feeder import engie_handler as handler
 from tests.creators import create_dynamodb_table
 
@@ -162,7 +162,8 @@ class TestLambdaHandlerEngie(TestCase):
             os.environ["TABLE_NAME"] = self.db_table.name
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})
-            self.assertEqual(3, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(6, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(3, len(IndexingSettingDocumentation.query(self.db_table)))
 
         with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=[]) as mock_gas, patch(
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]

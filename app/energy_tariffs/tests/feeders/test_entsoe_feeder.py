@@ -12,7 +12,7 @@ import requests_mock
 from pytz import utc, timezone
 
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe
+from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSettingDocumentation
 from lambda_feeder import entsoe_handler as handler
 from tests.creators import create_dynamodb_table, create_secrets
 
@@ -102,7 +102,8 @@ class TestLambdaHandlerEntsoe(TestCase):
             os.environ["SECRET_ARN"] = self.secret["ARN"]
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})
-            self.assertEqual(1, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(2, len(self.db_table.scan().get("Items", [])))
+            self.assertEqual(1, len(IndexingSettingDocumentation.query(self.db_table)))
 
         with patch("feeders.entsoe.EntsoeIndexingSetting.query", return_value=self.indexes) as mock:
             handler({"start": "2023/04/01", "end": "2023/04/15"}, {})

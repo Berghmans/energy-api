@@ -24,7 +24,8 @@ class EEXIndexingSetting(IndexingSetting):
         """Parse from the EEX JSON"""
         date_time = datetime.strptime(data.get("tradedatetimegmt"), "%m/%d/%Y %H:%M:%S %p")
         date_time = timezone.localize(date_time)
-        value = data.get("close")
+        # Ter informatie, de weergegeven prijzen worden berekend op basis van de laatst gekende waarde van ZTP DAM (Heren).
+        value = data.get("ontradeprice")
         return cls(
             name=index_name.removeprefix("#E.").replace("_", " "),
             value=float(value) if value is not None and value != "" else None,
@@ -82,4 +83,11 @@ class EEXIndexingSetting(IndexingSetting):
         """Get the ZTP indexes since given datefilter"""
         return EEXIndexingSetting.query(
             indexes=["#E.ZTP_GTND", "#E.ZTP_GTWE"], start=date_filter, end=date.today() if end is None else end, timezone=timezone("Europe/Brussels")
+        )
+
+    @staticmethod
+    def get_zee_values(date_filter: date, end: date = None):
+        """Get the ZEE indexes since given datefilter"""
+        return EEXIndexingSetting.query(
+            indexes=["#E.ZEE_GWND", "#E.ZEE_GWWE"], start=date_filter, end=date.today() if end is None else end, timezone=timezone("Europe/Brussels")
         )

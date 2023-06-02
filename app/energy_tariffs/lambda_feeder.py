@@ -45,7 +45,9 @@ def eex_handler(event, _context):
     else:
         not_before = (datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=7)).date()
         not_after = None
-    index_values = EEXIndexingSetting.get_ztp_values(date_filter=not_before, end=not_after)
+    index_values = EEXIndexingSetting.get_ztp_values(date_filter=not_before, end=not_after) + EEXIndexingSetting.get_zee_values(
+        date_filter=not_before, end=not_after
+    )
     dynamodb = boto3.resource("dynamodb")
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])
     logger.info(f"Sending {len(index_values)} indexing settings to the database")

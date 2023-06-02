@@ -37,7 +37,12 @@ def convert_month(month: str) -> int:
 
 def is_holiday(day: datetime) -> bool:
     """Check if a day is a holiday"""
-    return day in holidays.country_holidays(country="BE", years=day.year) or day in holidays.country_holidays(country="NL", years=day.year)
+    return (
+        day in holidays.country_holidays(country="BE", years=day.year)
+        or day in holidays.country_holidays(country="NL", years=day.year)
+        or day in holidays.country_holidays(country="DE", years=day.year)
+        or day in holidays.country_holidays(country="FR", years=day.year)
+    )
 
 
 def get_last_weekday(day: datetime) -> datetime:

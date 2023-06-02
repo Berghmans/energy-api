@@ -25,7 +25,7 @@ class EEXIndexingSetting(IndexingSetting):
         date_time = datetime.strptime(data.get("tradedatetimegmt"), "%m/%d/%Y %H:%M:%S %p")
         date_time = timezone.localize(date_time)
         # Ter informatie, de weergegeven prijzen worden berekend op basis van de laatst gekende waarde van ZTP DAM (Heren).
-        value = data.get("ontradeprice")
+        value = data.get("close")
         return cls(
             name=index_name.removeprefix("#E.").replace("_", " "),
             value=float(value) if value is not None and value != "" else None,

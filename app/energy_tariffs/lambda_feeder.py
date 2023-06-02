@@ -17,10 +17,11 @@ logger.setLevel(logging.INFO)
 
 def engie_handler(event, _context):
     """The Engie handler"""
+    tz_be = timezone("Europe/Brussels")  # Use BE timezone as we will be fetching "BE values"
     if "start" in event:
-        not_before = utc.localize(datetime.strptime(event["start"], "%Y/%m/%d"))
+        not_before = tz_be.localize(datetime.strptime(event["start"], "%Y/%m/%d"))
     else:
-        not_before = datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90)
+        not_before = datetime.now(tz_be).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90)
     index_values = EngieIndexingSetting.get_gas_values(not_before) + EngieIndexingSetting.get_energy_values(not_before)
     dynamodb = boto3.resource("dynamodb")
     db_table = dynamodb.Table(os.environ["TABLE_NAME"])
@@ -30,7 +31,7 @@ def engie_handler(event, _context):
     # Derived values
     calculation_date = None
     if "calculate" in event:
-        calculation_date = utc.localize(datetime.strptime(event["calculate"], "%Y/%m/%d"))
+        calculation_date = tz_be.localize(datetime.strptime(event["calculate"], "%Y/%m/%d"))
     derived_values = EngieIndexingSetting.calculate_derived_values(db_table, calculation_date)
     logger.info(f"Sending {len(derived_values)} derived indexing settings to the database")
     EngieIndexingSetting.save_list(db_table, derived_values)

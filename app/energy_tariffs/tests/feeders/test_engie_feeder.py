@@ -156,6 +156,7 @@ class TestLambdaHandlerEngie(TestCase):
         """Test the lambda handler"""
         # Path these methods so they return a fixed result, as the lambda handler is "moving"
         # and otherwise we would have no consistent results the coming months
+        tz_be = timezone("Europe/Brussels")
         with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=self.gas_indexes), patch(
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=self.energy_indexes
         ), patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=self.derived_indexes):
@@ -169,14 +170,14 @@ class TestLambdaHandlerEngie(TestCase):
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]
         ) as mock_energy, patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=[]) as mock_derived:
             handler({"start": "2023/04/01"}, {})
-            self.assertEqual([call(datetime(2023, 4, 1, tzinfo=utc))], mock_gas.mock_calls)
-            self.assertEqual([call(datetime(2023, 4, 1, tzinfo=utc))], mock_energy.mock_calls)
+            self.assertEqual([call(tz_be.localize(datetime(2023, 4, 1)))], mock_gas.mock_calls)
+            self.assertEqual([call(tz_be.localize(datetime(2023, 4, 1)))], mock_energy.mock_calls)
             self.assertEqual([call(self.db_table, None)], mock_derived.mock_calls)
 
         with patch("feeders.engie.EngieIndexingSetting.get_gas_values", return_value=[]) as mock_gas, patch(
             "feeders.engie.EngieIndexingSetting.get_energy_values", return_value=[]
         ) as mock_energy, patch("feeders.engie.EngieIndexingSetting.calculate_derived_values", return_value=[]) as mock_derived:
             handler({"calculate": "2023/04/30"}, {})
-            self.assertEqual([call(datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90))], mock_gas.mock_calls)
-            self.assertEqual([call(datetime.now(utc).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90))], mock_energy.mock_calls)
-            self.assertEqual([call(self.db_table, datetime(2023, 4, 30, tzinfo=utc))], mock_derived.mock_calls)
+            self.assertEqual([call(datetime.now(tz_be).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90))], mock_gas.mock_calls)
+            self.assertEqual([call(datetime.now(tz_be).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=90))], mock_energy.mock_calls)
+            self.assertEqual([call(self.db_table, tz_be.localize(datetime(2023, 4, 30)))], mock_derived.mock_calls)

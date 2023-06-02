@@ -128,6 +128,19 @@ class EngieIndexingSetting(IndexingSetting):
         # De indexatieparameter is het rekenkundig gemiddelde van de dagelijkse quoteringen Day Ahead EPEX SPOT Belgium
         # (hierna EPEX DAM) tijdens de maand van levering. De dagelijkse quoteringen EPEX DAM worden uitgedrukt in €/MWh.
         # De waarde van EPEX DAM van de lopende maand zal pas gekend zijn aan het einde van de maand.
+
+        # ZTP DAM
+        # De indexatieparameter is het rekenkundig gemiddelde van de dagelijkse quoteringen op “European Spot Gas Markets”
+        # (“ESGM”) gepubliceerd door ICIS-Heren Energy Ltd., onder de naam “ZTP Price Assessment Day-Ahead” voor de
+        # weekdagen en onder de naam “ZTP Price Assessment Weekend” voor weekenddagen tijdens de maand van levering. De
+        # parameter ZTP DAM (Heren), is uitgedrukt in €/MWh.
+
+        # ZIG DAM
+        # De indexatieparameter is gebaseerd op het rekenkundig gemiddelde van de dagelijkse quoteringen Day Ahead
+        # Zeebrugge Heren (hierna ZIG DAM) tijdens de maand van levering. De dagelijkse quoteringen ZIG DAM (Natural Gas
+        # Price Assessment Mid) worden uitgedrukt in Pence/Therm en omgezet naar €/MWh op basis van de dagelijkse
+        # wisselkoers gepubliceerd door Thomson Reuters (WM/Reuters 2PM CET FX Benchmark) en de eenhedenconversie
+        # Therm/MWh (1.000 Therms = 29,3071 MWh).
         tomorrow = calculation_date + timedelta(days=1)
         if tomorrow.month > calculation_date.month:
             # Tomorrow is a new month so calculate the values for EPEX DAM

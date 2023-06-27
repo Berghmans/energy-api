@@ -9,7 +9,7 @@ from datetime import datetime, date
 import requests
 from pytz import timezone
 
-from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
+from dao.indexingsetting import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
 
 EEX_URL = "https://webservice-eex.gvsi.com/query/json/getDaily/ontradeprice/close/tradedatetimegmt/"

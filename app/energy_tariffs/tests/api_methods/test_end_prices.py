@@ -8,7 +8,7 @@ from pytz import utc
 from api.methods.end_prices import EndPricesApiMethod
 from api.methods.end_price import EndPriceApiMethod
 from api.methods.indexing_setting import IndexingSettingApiMethod
-from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
+from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 from tests.creators import create_dynamodb_table
 from tests.api_methods import TestCaseApiMethod
 

@@ -11,7 +11,7 @@ from moto import mock_dynamodb
 from pytz import utc
 
 from feeders.eex import EEXIndexingSetting, EEX_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSettingDocumentation
+from dao.indexingsetting import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSettingDocumentation
 from lambda_feeder import eex_handler as handler
 from tests.creators import create_dynamodb_table
 

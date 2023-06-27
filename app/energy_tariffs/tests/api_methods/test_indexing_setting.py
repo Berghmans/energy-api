@@ -6,7 +6,7 @@ from moto import mock_dynamodb
 from pytz import utc
 
 from api.methods.indexing_setting import IndexingSettingApiMethod
-from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
+from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 from tests.creators import create_dynamodb_table
 from tests.api_methods import TestCaseApiMethod
 

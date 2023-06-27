@@ -5,7 +5,7 @@ import json
 
 from api.method import ApiMethod
 from api.result import ApiResult
-from dao import IndexingSettingDocumentation
+from dao.indexingsetting import IndexingSettingDocumentation
 
 
 logger = logging.getLogger(__name__)

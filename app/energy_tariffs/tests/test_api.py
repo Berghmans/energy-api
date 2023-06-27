@@ -11,7 +11,7 @@ from pytz import utc
 from api import Api
 from api.method import ApiMethod
 from api.result import ApiResult
-from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
+from dao.indexingsetting import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 from lambda_api import handler
 from tests.creators import create_dynamodb_table
 

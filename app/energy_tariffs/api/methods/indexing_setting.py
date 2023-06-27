@@ -9,7 +9,7 @@ from pytz.exceptions import UnknownTimeZoneError
 
 from api.method import ApiMethod
 from api.result import ApiResult
-from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
+from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 
 
 logger = logging.getLogger(__name__)

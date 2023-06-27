@@ -10,7 +10,7 @@ import requests
 import boto3
 from pytz import utc
 
-from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
+from dao.indexingsetting import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
 
 ENTSOE_URL = "https://web-api.tp.entsoe.eu/api"

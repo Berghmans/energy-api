@@ -13,7 +13,7 @@ from pytz import utc, timezone
 
 from feeders.engie import EngieIndexingSetting, GAS_URL, ENERGY_URL, convert_month
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting, IndexingSettingDocumentation
+from dao.indexingsetting import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSetting, IndexingSettingDocumentation
 from lambda_feeder import engie_handler as handler
 from tests.creators import create_dynamodb_table
 

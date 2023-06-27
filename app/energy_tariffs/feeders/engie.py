@@ -10,7 +10,7 @@ import requests
 from pytz import timezone
 import holidays
 
-from dao import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
+from dao.indexingsetting import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 
 
 logger = logging.getLogger(__name__)

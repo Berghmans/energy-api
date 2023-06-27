@@ -12,7 +12,7 @@ import requests_mock
 from pytz import utc, timezone
 
 from feeders.entsoe import EntsoeIndexingSetting, ENTSOE_URL
-from dao import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSettingDocumentation
+from dao.indexingsetting import IndexingSettingOrigin, IndexingSettingTimeframe, IndexingSettingDocumentation
 from lambda_feeder import entsoe_handler as handler
 from tests.creators import create_dynamodb_table, create_secrets
 

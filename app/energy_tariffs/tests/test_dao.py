@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from moto import mock_dynamodb
 from pytz import utc
 
-from dao import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin, IndexingSettingDocumentation, DaoDynamoDB
+from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin, IndexingSettingDocumentation, DaoDynamoDB
 from tests.creators import create_dynamodb_table
 
 

@@ -7,6 +7,7 @@ build_dir = "out"
 
 [default.deploy.parameters]
 template = "out/template.yaml"
+s3_prefix = "energy"
 capabilities = "CAPABILITY_IAM"
 no_confirm_changeset = true
 fail_on_empty_changeset = false
@@ -15,4 +16,3 @@ tags = "Application=\"energy\""
 [default.build.parameters]
 no_beta_features = true
 use_container = true
-s3_prefix = "energy"

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from moto import mock_dynamodb
 from pytz import utc
 
-from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin, IndexingSettingDocumentation, DaoDynamoDB
+from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin, IndexingSettingDocumentation
 from tests.creators import create_dynamodb_table
 
 
@@ -189,13 +189,3 @@ class TestIndexingSettingDocumentation(TestCase):
         )
         objects = IndexingSettingDocumentation.query(self.db_table)
         self.assertEqual(2, len(objects))
-
-
-@mock_dynamodb
-class TestDaoDynamoDB(TestCase):
-    """Test class for DaoDynamoDB"""
-
-    def test_not_implemented(self):
-        """Test the methods to be implemented"""
-        self.assertRaises(NotImplementedError, DaoDynamoDB._from_ddb_json, {})
-        self.assertRaises(NotImplementedError, DaoDynamoDB()._to_ddb_json)

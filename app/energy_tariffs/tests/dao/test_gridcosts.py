@@ -74,3 +74,10 @@ class TestIndexingSettingDocumentation(TestCase):
         self.assertEqual(302.431, self.cost_obj.calculate(3, 5000, False))
         self.assertEqual(273.137, self.cost_obj.calculate(5, 2000, True))
         self.assertEqual(272.057, self.cost_obj.calculate(5, 2000, False))
+
+        self.cost_obj.country = "FR"
+        self.assertRaises(NotImplementedError, self.cost_obj.calculate, 3, 5000, True)
+        self.cost_obj.country = "BE"
+        self.assertEqual(303.511, self.cost_obj.calculate(3, 5000, True))
+        self.cost_obj.direction = EnergyDirection.INJECTION
+        self.assertRaises(NotImplementedError, self.cost_obj.calculate, 3, 5000, True)

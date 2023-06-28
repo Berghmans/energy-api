@@ -77,6 +77,6 @@ class EnergyGridCost(DaoDynamoDB):
             power_cost = peak_power_usage * self.peak_usage_avg_monthly_cost
             data_management_cost = self.data_management_dynamic if dynamic_data_management else self.data_management_standard
 
-            return energy_cost + power_cost + data_management_cost
+            return round(energy_cost + power_cost + data_management_cost, 3)
 
         raise NotImplementedError(f"Grid costs not implemented for this country and direction: {self.country} {self.direction.name}")

@@ -67,3 +67,10 @@ class TestIndexingSettingDocumentation(TestCase):
         self.assertEqual("Fluvius Antwerpen", object.grid_provider)
         self.assertEqual(EnergyDirection.DRAWDOWN, object.direction)
         self.assertEqual(37.7649625, object.peak_usage_avg_monthly_cost)
+
+    def test_calculate(self):
+        """Test the calculate method"""
+        self.assertEqual(303.511, self.cost_obj.calculate(3, 5000, True))
+        self.assertEqual(302.431, self.cost_obj.calculate(3, 5000, False))
+        self.assertEqual(273.137, self.cost_obj.calculate(5, 2000, True))
+        self.assertEqual(272.057, self.cost_obj.calculate(5, 2000, False))

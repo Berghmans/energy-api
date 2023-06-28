@@ -41,10 +41,11 @@ class EnergyGridCost(DaoDynamoDB):
             return value
 
         data = {key: _convert_value(value) for key, value in asdict(self).items()}
+        primary = f"energygridcost#{self.country}#{self.grid_provider}"
         return {
             **data,
-            "primary": "energygridcost",
-            "secondary": f"{self.country}#{self.grid_provider}",
+            "primary": f"energygridcost#{self.country}#{self.grid_provider}",
+            "secondary": hash(primary),
         }
 
     @classmethod
@@ -53,7 +54,7 @@ class EnergyGridCost(DaoDynamoDB):
         return cls(
             country=data.get("country"),
             grid_provider=data.get("grid_provider"),
-            direction=EnergyDirection(data.get("direction")),
+            direction=EnergyDirection[data.get("direction")],
             peak_usage_avg_monthly_cost=float(data.get("peak_usage_avg_monthly_cost")),
             peak_usage_kwh=float(data.get("peak_usage_kwh")),
             data_management_standard=float(data.get("data_management_standard")),
@@ -66,7 +67,8 @@ class EnergyGridCost(DaoDynamoDB):
     @classmethod
     def load(cls, db_table, country: str, provider: str):
         """Load the grid costs from the database"""
-        return EnergyGridCost.load_key(db_table=db_table, primary="energygridcost", secondary=f"{country}#{provider}")
+        primary = f"energygridcost#{country}#{provider}"
+        return EnergyGridCost.load_key(db_table=db_table, primary=primary, secondary=hash(primary))
 
     def calculate(self, peak_power_usage: float, total_energy_usage: float, dynamic_data_management: bool) -> float:
         """Calculate the yearly price given the average monthly peak power usage and total energy usage"""

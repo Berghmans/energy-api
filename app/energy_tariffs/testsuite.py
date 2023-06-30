@@ -21,6 +21,7 @@ import tests.api_methods.test_end_price
 import tests.api_methods.test_end_prices
 import tests.api_methods.test_list
 import tests.api_methods.test_grid_cost
+import tests.api_methods.test_excise
 
 os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
 logging.disable(logging.CRITICAL)  # Disable logging
@@ -43,6 +44,7 @@ suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_end_prices))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_list))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_grid_cost))
+suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_excise))
 # Run the test suite
 results = unittest.TextTestRunner().run(suite)
 sys.exit(not results.wasSuccessful())

@@ -119,4 +119,4 @@ class TestIndexingSettingsApiMethod(TestCaseApiMethod):
                 ),
             }
         )
-        self.assertProcess(method, 400, {})
+        self.assertProcess(method, 400, {"error": "No result found for one of the requested indices"})

@@ -5,7 +5,7 @@ import json
 
 from api.method import ApiMethod
 from api.methods.indexing_setting import IndexingSettingApiMethod
-from api.result import ApiResult
+from api.result import ApiResult, Success, BadRequest
 
 
 logger = logging.getLogger(__name__)
@@ -30,8 +30,8 @@ class EndPriceApiMethod(ApiMethod):
             # b: the slope of the line, which is the factor to be multiplied with the indexing setting value
             end_price = self.intercept + self.slope * index_result.body["value"]
             end_price *= self.taxes
-            return ApiResult(200, {**index_result.body, "end_price": end_price})
-        return ApiResult(400)
+            return Success({**index_result.body, "end_price": end_price})
+        return BadRequest("No result found for requested index")
 
     @classmethod
     def from_body(cls, db_table, body: dict):

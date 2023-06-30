@@ -6,7 +6,7 @@ import logging
 import boto3
 
 from api import Api
-from api.result import ApiResult
+from api.result import BadRequest
 
 
 logger = logging.getLogger(__name__)
@@ -30,4 +30,4 @@ def handler(event, _context):
         return result.to_api()
 
     logger.warning("Returning Bad Request as we were not able to find a suitable processing method")
-    return ApiResult(400).to_api()
+    return BadRequest("No method found for processing").to_api()

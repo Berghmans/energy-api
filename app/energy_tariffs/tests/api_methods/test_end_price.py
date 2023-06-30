@@ -84,4 +84,4 @@ class TestEndPriceApiMethod(TestCaseApiMethod):
             slope=1.0,
             taxes=1.5,
         )
-        self.assertProcess(method, 400, {})
+        self.assertProcess(method, 400, {"error": "No result found for requested index"})

@@ -85,4 +85,4 @@ class TestIndexingSettingApiMethod(TestCaseApiMethod):
                 "DYNAMIC": True,
             },
         )
-        self.assertProcess(method, 400, {})
+        self.assertProcess(method, 400, {"error": "No result found for grid provider"})

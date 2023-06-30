@@ -15,7 +15,7 @@ class TestFeeder(TestCase):
 
     def test_handlers(self):
         """Test the lambda handler"""
-        handlers = ["engie", "eex", "entsoe", "fluvius"]
+        handlers = ["engie", "eex", "entsoe", "fluvius", "excises"]
         for feeder in handlers:
             with patch(f"lambda_feeder.{feeder}_handler") as mock:
                 handler({"feed": feeder}, {})

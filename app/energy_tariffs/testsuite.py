@@ -12,6 +12,7 @@ import tests.feeders.test_engie_feeder
 import tests.feeders.test_eex_feeder
 import tests.feeders.test_entsoe_feeder
 import tests.feeders.test_fluvius_feeder
+import tests.feeders.test_excise_feeder
 import tests.test_api
 import tests.test_feeder
 import tests.api_methods.test_indexing_setting
@@ -35,6 +36,7 @@ suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_engi
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_eex_feeder))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_entsoe_feeder))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_fluvius_feeder))
+suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.feeders.test_excise_feeder))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_indexing_setting))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_indexing_settings))
 suite.addTests(unittest.TestLoader().loadTestsFromModule(tests.api_methods.test_end_price))

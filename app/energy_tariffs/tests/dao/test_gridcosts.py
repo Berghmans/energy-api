@@ -9,8 +9,8 @@ from tests.creators import create_dynamodb_table
 
 
 @mock_dynamodb
-class TestIndexingSettingDocumentation(TestCase):
-    """Test class for IndexingSetting"""
+class TestEnergyGridCost(TestCase):
+    """Test class for EnergyGridCost"""
 
     def setUp(self):
         """Set up the test"""

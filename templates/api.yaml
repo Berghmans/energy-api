@@ -253,6 +253,12 @@ Resources:
             ScheduleExpression: "cron(5 8 1 * ? *)"
             ScheduleExpressionTimezone: Europe/Brussels
             Input: '{"feed": "fluvius"}'
+        Excises:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "cron(5 2 1 * ? *)"
+            ScheduleExpressionTimezone: Europe/Brussels
+            Input: '{"feed": "excises"}'
 
   LambdaFeederLogs:
     Type: AWS::Logs::LogGroup

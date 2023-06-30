@@ -7,6 +7,18 @@ import hashlib
 from dao.dynamodb import DaoDynamoDB
 
 
+def divide_chunks(graduated: dict[int, float]):
+    """Divide the list of keys in intervals"""
+    keys = sorted(list(graduated.keys())) + [-1]
+    for i in range(0, len(keys) - 1):
+        yield (keys[i], keys[i + 1], graduated[keys[i]])
+
+
+def calculate_graduation(graduated: dict[int, float], energy_usage: float):
+    """Calculate the value given the graduaded values"""
+    return sum([max((min(energy_usage, end) if end != -1 else energy_usage) - start, 0) * value for start, end, value in divide_chunks(graduated)])
+
+
 @dataclass
 class EnergyExcise(DaoDynamoDB):
     """Class that represents the tax levied on energy consumption"""
@@ -19,11 +31,13 @@ class EnergyExcise(DaoDynamoDB):
     def _to_ddb_json(self):
         """Convert the current object to a JSON for storing in dynamodb"""
 
-        primary, secondary = EnergyExcise._ddb_hash(self.country, self.grid_provider)
+        primary, secondary = EnergyExcise._ddb_hash(self.country)
         return {
             **asdict(self),
             "primary": primary,
             "secondary": secondary,
+            "energy_contribution": str(self.energy_contribution),
+            "graduated_excise": {str(key): str(value) for key, value in self.graduated_excise.items()},
         }
 
     @staticmethod
@@ -38,8 +52,8 @@ class EnergyExcise(DaoDynamoDB):
         """Parse the JSON from dynamodb and create the object"""
         return cls(
             country=data.get("country"),
-            graduated_excise=data.get("graduated_excise"),
-            energy_contribution=data.get("energy_contribution"),
+            graduated_excise={int(key): float(value) for key, value in data.get("graduated_excise", {}).items()},
+            energy_contribution=float(data.get("energy_contribution")),
         )
 
     @classmethod
@@ -50,20 +64,6 @@ class EnergyExcise(DaoDynamoDB):
 
     def calculate(self, total_energy_usage: float) -> float:
         """Calculate the excise given the total energy usage"""
-
-        def divide_chunks(graduated: dict[int, float]):
-            keys = [0] + sorted(list(graduated.keys())) + [-1]
-            for i in range(0, len(keys) - 1):
-                yield (keys[i], keys[i + 1])
-
-        def calculate_graduation(graduated: dict[int, float], energy_usage: float):
-            return sum(
-                [
-                    max((min(energy_usage, end) - start), 0) * graduated[end] if end != -1 else max(energy_usage - start, 0) * graduated[start]
-                    for start, end in divide_chunks(graduated)
-                ]
-            )
-
         excise = calculate_graduation(self.graduated_excise, total_energy_usage)
         contribution = total_energy_usage * self.energy_contribution
 

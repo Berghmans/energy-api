@@ -6,7 +6,7 @@ import json
 
 from api.method import ApiMethod
 from api.methods.end_price import EndPriceApiMethod
-from api.result import ApiResult
+from api.result import ApiResult, Success, BadRequest
 
 
 logger = logging.getLogger(__name__)
@@ -23,9 +23,9 @@ class EndPricesApiMethod(ApiMethod):
         results = {key: request.process() for key, request in self.indexes.items()}
 
         if any(result.status_code != 200 for result in results.values()):
-            return ApiResult(400)
+            return BadRequest("No result found for one of the requested indices")
 
-        return ApiResult(200, {key: result.body for key, result in results.items()})
+        return Success({key: result.body for key, result in results.items()})
 
     @classmethod
     def from_body(cls, db_table, body: dict):

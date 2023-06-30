@@ -5,7 +5,7 @@ import json
 
 
 from api.method import ApiMethod
-from api.result import ApiResult
+from api.result import ApiResult, Success, BadRequest
 from dao.gridcost import EnergyGridCost
 
 
@@ -28,15 +28,14 @@ class GridCostApiMethod(ApiMethod):
         grid_cost = EnergyGridCost.load(db_table=self.db_table, country=self.country, provider=self.provider)
 
         if grid_cost is not None:
-            return ApiResult(
-                200,
+            return Success(
                 {
                     "grid_cost": grid_cost.calculate(
                         peak_power_usage=self.power_usage, total_energy_usage=self.energy_usage, dynamic_data_management=self.dynamic
                     )
                 },
             )
-        return ApiResult(400)
+        return BadRequest("No result found for grid provider")
 
     @classmethod
     def from_body(cls, db_table, body: dict):

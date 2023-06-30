@@ -70,7 +70,9 @@ class TestLambdaHandlerEngie(TestCase):
         """Test the lambda handler"""
         # Path these methods so they return a fixed result, as the lambda handler is "moving"
         # and otherwise we would have no consistent results the coming months
-        with patch("feeders.eex.EEXIndexingSetting.get_ztp_values", return_value=self.gas_indexes):
+        with patch("feeders.eex.EEXIndexingSetting.get_ztp_values", return_value=self.gas_indexes), patch(
+            "feeders.eex.EEXIndexingSetting.get_zee_values", return_value=[]
+        ):
             os.environ["TABLE_NAME"] = self.db_table.name
             self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
             handler({}, {})

@@ -8,7 +8,7 @@ from pytz import utc, timezone
 from pytz.exceptions import UnknownTimeZoneError
 
 from api.method import ApiMethod
-from api.result import ApiResult
+from api.result import ApiResult, Success, BadRequest
 from dao.indexingsetting import IndexingSetting, IndexingSettingTimeframe, IndexingSettingOrigin
 
 
@@ -50,8 +50,8 @@ class IndexingSettingApiMethod(ApiMethod):
                 # Translate enums to their string name
                 return {**asdict(index), "timeframe": index.timeframe.name, "origin": index.origin.name}
 
-            return ApiResult(200, translate_index(indexing_setting))
-        return ApiResult(400)
+            return Success(translate_index(indexing_setting))
+        return BadRequest("No result found for requested index")
 
     @staticmethod
     def parse_date(timeframe: IndexingSettingTimeframe, date_str: str, tz: str) -> datetime:

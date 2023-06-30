@@ -164,4 +164,4 @@ class TestIndexingSettingApiMethod(TestCaseApiMethod):
             timeframe=IndexingSettingTimeframe.MONTHLY,
             origin=IndexingSettingOrigin.ORIGINAL,
         )
-        self.assertProcess(method, 400, {})
+        self.assertProcess(method, 400, {"error": "No result found for requested index"})

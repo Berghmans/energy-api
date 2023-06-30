@@ -10,7 +10,7 @@ from pytz import utc
 
 from api import Api
 from api.method import ApiMethod
-from api.result import ApiResult
+from api.result import ApiResult, Success, BadRequest
 from dao.indexingsetting import IndexingSetting, IndexingSettingOrigin, IndexingSettingTimeframe
 from lambda_api import handler
 from tests.creators import create_dynamodb_table
@@ -88,6 +88,11 @@ class TestApi(TestCase):
         """Test ApiResult results"""
         good = ApiResult(200, {"result": "good"})
         bad = ApiResult(400, {"result": "bad"})
+        success = Success({"result": "good"})
+        bad_request = BadRequest("some error")
 
         self.assertEqual({"statusCode": 200, "body": '{"result": "good"}'}, good.to_api())
         self.assertEqual({"statusCode": 400, "body": '{"result": "bad"}'}, bad.to_api())
+        self.assertEqual({"statusCode": 200, "body": '{"result": "good"}'}, success.to_api())
+        self.assertEqual(good.to_api(), success.to_api())
+        self.assertEqual({"statusCode": 400, "body": '{"error": "some error"}'}, bad_request.to_api())

@@ -4,7 +4,7 @@ import logging
 import json
 
 from api.method import ApiMethod
-from api.result import ApiResult
+from api.result import ApiResult, Success
 from dao.indexingsetting import IndexingSettingDocumentation
 
 
@@ -21,7 +21,7 @@ class ListApiMethod(ApiMethod):
     def process(self) -> ApiResult:
         docs = IndexingSettingDocumentation.query(self.db_table)
         docs_list = [{**asdict(doc), "timeframe": doc.timeframe.name, "origin": doc.origin.name} for doc in docs]
-        return ApiResult(200, docs_list)
+        return Success(docs_list)
 
     @classmethod
     def from_body(cls, db_table, body: dict):

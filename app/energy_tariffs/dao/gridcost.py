@@ -1,4 +1,5 @@
 """Data access object for grid costs"""
+from __future__ import annotations
 from dataclasses import dataclass, asdict
 from enum import Enum, auto
 
@@ -65,7 +66,7 @@ class EnergyGridCost(DaoDynamoDB):
         )
 
     @classmethod
-    def load(cls, db_table, country: str, provider: str):
+    def load(cls, db_table, country: str, provider: str) -> EnergyGridCost:
         """Load the grid costs from the database"""
         primary = f"energygridcost#{country}#{provider}"
         return EnergyGridCost.load_key(db_table=db_table, primary=primary, secondary=hash(primary))

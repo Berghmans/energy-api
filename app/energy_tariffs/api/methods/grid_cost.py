@@ -30,9 +30,14 @@ class GridCostApiMethod(ApiMethod):
         if grid_cost is not None:
             return Success(
                 {
+                    "country": self.country,
+                    "provider": self.provider,
+                    "power": self.power_usage,
+                    "energy": self.energy_usage,
+                    "dynamic": self.dynamic,
                     "grid_cost": grid_cost.calculate(
                         peak_power_usage=self.power_usage, total_energy_usage=self.energy_usage, dynamic_data_management=self.dynamic
-                    )
+                    ),
                 },
             )
         return BadRequest("No result found for grid provider")

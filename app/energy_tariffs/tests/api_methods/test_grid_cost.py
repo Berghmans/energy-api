@@ -52,6 +52,11 @@ class TestIndexingSettingApiMethod(TestCaseApiMethod):
         """Test the process method"""
         method = GridCostApiMethod(db_table=self.db_table, country="BE", provider="Fluvius Antwerpen", power_usage=3.0, energy_usage=5000.0, dynamic=True)
         expected = {
+            "country": "BE",
+            "provider": "Fluvius Antwerpen",
+            "power": 3,
+            "energy": 5000,
+            "dynamic": True,
             "grid_cost": 303.511,
         }
         self.assertProcess(method, 200, expected)
@@ -69,6 +74,11 @@ class TestIndexingSettingApiMethod(TestCaseApiMethod):
             },
         )
         expected = {
+            "country": "BE",
+            "provider": "Fluvius Antwerpen",
+            "power": 3,
+            "energy": 5000,
+            "dynamic": True,
             "grid_cost": 303.511,
         }
         self.assertProcess(method, 200, expected)

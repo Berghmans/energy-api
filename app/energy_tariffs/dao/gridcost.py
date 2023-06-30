@@ -2,6 +2,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, asdict
 from enum import Enum, auto
+from typing import Tuple
+import hashlib
 
 from dao.dynamodb import DaoDynamoDB
 
@@ -42,12 +44,19 @@ class EnergyGridCost(DaoDynamoDB):
             return value
 
         data = {key: _convert_value(value) for key, value in asdict(self).items()}
-        primary = f"energygridcost#{self.country}#{self.grid_provider}"
+        primary, secondary = EnergyGridCost._ddb_hash(self.country, self.grid_provider)
         return {
             **data,
-            "primary": f"energygridcost#{self.country}#{self.grid_provider}",
-            "secondary": hash(primary),
+            "primary": primary,
+            "secondary": secondary,
         }
+
+    @staticmethod
+    def _ddb_hash(country: str, provider: str) -> Tuple[str, int]:
+        """Get a hash for dynamodb"""
+        primary = f"energygridcost#{country}#{provider}"
+        secondary_int = int(hashlib.sha1(primary.encode(encoding="utf-8")).hexdigest()[-16:], 16)
+        return (primary, secondary_int)
 
     @classmethod
     def _from_ddb_json(cls, data):
@@ -68,8 +77,8 @@ class EnergyGridCost(DaoDynamoDB):
     @classmethod
     def load(cls, db_table, country: str, provider: str) -> EnergyGridCost:
         """Load the grid costs from the database"""
-        primary = f"energygridcost#{country}#{provider}"
-        return EnergyGridCost.load_key(db_table=db_table, primary=primary, secondary=hash(primary))
+        primary, secondary = EnergyGridCost._ddb_hash(country, provider)
+        return EnergyGridCost.load_key(db_table=db_table, primary=primary, secondary=secondary)
 
     def calculate(self, peak_power_usage: float, total_energy_usage: float, dynamic_data_management: bool) -> float:
         """Calculate the yearly price given the average monthly peak power usage and total energy usage"""

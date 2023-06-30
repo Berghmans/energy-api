@@ -31,10 +31,11 @@ class TestIndexingSettingDocumentation(TestCase):
     def test_save(self):
         """Test the save method"""
         self.cost_obj.save(self.db_table)
+        primary, secondary = EnergyGridCost._ddb_hash("BE", "Fluvius Antwerpen")
         response = self.db_table.get_item(
             Key={
-                "primary": "energygridcost#BE#Fluvius Antwerpen",
-                "secondary": hash("energygridcost#BE#Fluvius Antwerpen"),
+                "primary": primary,
+                "secondary": secondary,
             }
         )
         self.assertIn("Item", response)

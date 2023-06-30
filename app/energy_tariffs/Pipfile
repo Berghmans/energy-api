@@ -10,6 +10,7 @@ boto3 = "*"
 pytz = "*"
 lxml = "*"
 holidays = "*"
+openpyxl = "*"
 
 [dev-packages]
 requests-mock = "*"

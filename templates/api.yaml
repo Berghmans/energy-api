@@ -247,6 +247,12 @@ Resources:
             ScheduleExpression: "cron(5 0/7 * * ? *)"
             ScheduleExpressionTimezone: Europe/Brussels
             Input: '{"feed": "entsoe"}'
+        Fluvius:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "cron(5 8 1 * ? *)"
+            ScheduleExpressionTimezone: Europe/Brussels
+            Input: '{"feed": "fluvius"}'
 
   LambdaFeederLogs:
     Type: AWS::Logs::LogGroup

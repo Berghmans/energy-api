@@ -9,6 +9,7 @@ from pytz import utc, timezone
 from feeders.engie import EngieIndexingSetting
 from feeders.eex import EEXIndexingSetting
 from feeders.entsoe import EntsoeIndexingSetting
+from feeders.fluvius import FluviusParser, EnergyGridCost
 
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,16 @@ def entsoe_handler(event, _context):
     EntsoeIndexingSetting.save_list(db_table, index_values)
 
 
+def fluvius_handler(event, _context):
+    """The Fluvius handler"""
+    logger.info(f"Fetching values from {FluviusParser.url}")
+    grid_costs = FluviusParser.from_url()
+    dynamodb = boto3.resource("dynamodb")
+    db_table = dynamodb.Table(os.environ["TABLE_NAME"])
+    logger.info(f"Sending {len(grid_costs)} Fluvius grid costs to the database")
+    EnergyGridCost.save_list(db_table, grid_costs)
+
+
 def handler(event, context):
     """The handler"""
     if "feed" in event:
@@ -84,5 +95,7 @@ def handler(event, context):
             eex_handler(event, context)
         if feeder == "entsoe":
             entsoe_handler(event, context)
+        if feeder == "fluvius":
+            fluvius_handler(event, context)
     else:
         logger.info("No feed defined, so skipping...")

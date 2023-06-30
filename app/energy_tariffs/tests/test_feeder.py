@@ -13,20 +13,10 @@ class TestFeeder(TestCase):
         """Test the lambda handler"""
         handler({}, {})
 
-    def test_handler_engie(self):
+    def test_handlers(self):
         """Test the lambda handler"""
-        with patch("lambda_feeder.engie_handler") as mock:
-            handler({"feed": "engie"}, {})
-            self.assertEqual(1, mock.call_count)
-
-    def test_handler_eex(self):
-        """Test the lambda handler"""
-        with patch("lambda_feeder.eex_handler") as mock:
-            handler({"feed": "eex"}, {})
-            self.assertEqual(1, mock.call_count)
-
-    def test_handler_entsoe(self):
-        """Test the lambda handler"""
-        with patch("lambda_feeder.entsoe_handler") as mock:
-            handler({"feed": "entsoe"}, {})
-            self.assertEqual(1, mock.call_count)
+        handlers = ["engie", "eex", "entsoe", "fluvius"]
+        for feeder in handlers:
+            with patch(f"lambda_feeder.{feeder}_handler") as mock:
+                handler({"feed": feeder}, {})
+                self.assertEqual(1, mock.call_count, f"Handler for {feeder} not invoked")

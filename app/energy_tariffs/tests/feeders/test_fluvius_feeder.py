@@ -36,7 +36,7 @@ class TestFluviusGridCosts(TestCase):
         """Test the from_url method"""
         mock_url(mock, FluviusParser.url, "fluvius_grid_costs.html")
         mock_url(mock, self.excel_url, "fluvius_excel_redirect.html")
-        FluviusParser.from_url()
+        grid_costs = FluviusParser.from_url()
         self.assertEqual(
             [
                 call("https://www.fluvius.be/nl/publicatie/fluvius-antwerpen-distributienettarief-afname-elektriciteit-01012023-31122023"),
@@ -123,6 +123,7 @@ class TestFluviusGridCosts(TestCase):
             ],
             mock_parser.mock_calls,
         )
+        self.assertEqual(38, len(grid_costs))
 
     def test_extract_excel_url(self, mock):
         """Test the extract_excel_url function"""

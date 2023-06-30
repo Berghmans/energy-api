@@ -4,5 +4,6 @@ from api.methods.indexing_settings import IndexingSettingsApiMethod
 from api.methods.end_price import EndPriceApiMethod
 from api.methods.end_prices import EndPricesApiMethod
 from api.methods.list import ListApiMethod
+from api.methods.grid_cost import GridCostApiMethod
 
-__all__ = ["IndexingSettingApiMethod", "IndexingSettingsApiMethod", "EndPriceApiMethod", "EndPricesApiMethod", "ListApiMethod"]
+__all__ = ["IndexingSettingApiMethod", "IndexingSettingsApiMethod", "EndPriceApiMethod", "EndPricesApiMethod", "ListApiMethod", "GridCostApiMethod"]

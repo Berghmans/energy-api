@@ -5,11 +5,20 @@ import json
 import logging
 
 from api.method import ApiMethod
-from api.methods import IndexingSettingApiMethod, IndexingSettingsApiMethod, EndPriceApiMethod, EndPricesApiMethod, ListApiMethod
+from api.methods import IndexingSettingApiMethod, IndexingSettingsApiMethod, EndPriceApiMethod, EndPricesApiMethod, ListApiMethod, GridCostApiMethod
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+METHOD_MAP = {
+    ("indexingsetting", "POST"): IndexingSettingApiMethod,
+    ("indexingsettings", "POST"): IndexingSettingsApiMethod,
+    ("endprice", "POST"): EndPriceApiMethod,
+    ("endprices", "POST"): EndPricesApiMethod,
+    ("list", "GET"): ListApiMethod,
+    ("gridcost", "POST"): GridCostApiMethod,
+}
 
 
 @dataclass
@@ -21,21 +30,11 @@ class Api:
 
     def parse(self, event: dict) -> ApiMethod:
         """Parse the incoming event through lambda from API Gateway"""
-
-        def has_value(data: dict, key: str, value: str):
-            """Check if the data has the key and given value"""
-            return key in data and data[key] == value
-
-        if has_value(event, "path", f"{self.base_path}/indexingsetting") and has_value(event, "httpMethod", "POST"):
-            return IndexingSettingApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
-        if has_value(event, "path", f"{self.base_path}/indexingsettings") and has_value(event, "httpMethod", "POST"):
-            return IndexingSettingsApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
-        if has_value(event, "path", f"{self.base_path}/endprice") and has_value(event, "httpMethod", "POST"):
-            return EndPriceApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
-        if has_value(event, "path", f"{self.base_path}/endprices") and has_value(event, "httpMethod", "POST"):
-            return EndPricesApiMethod.from_body(self.db_table, json.loads(event.get("body", r"{}")))
-        if has_value(event, "path", f"{self.base_path}/list") and has_value(event, "httpMethod", "GET"):
-            return ListApiMethod.from_body(self.db_table, {})
+        path = str(event.get("path", "")).removeprefix(self.base_path).strip("/")
+        method = str(event.get("httpMethod", ""))
+        call_method = METHOD_MAP.get((path, method))
+        if call_method is not None:
+            return call_method.from_body(self.db_table, json.loads(event.get("body", r"{}")))
 
         logger.warning("Unable to parse event")
         return None

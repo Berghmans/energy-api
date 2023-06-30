@@ -3,11 +3,15 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import patch, call
 from pathlib import Path
+import os
 
 import requests_mock
+from moto import mock_dynamodb
 
-from feeders.fluvius import FluviusParser, extract_excel_url
+from feeders.fluvius import FluviusParser, extract_excel_url, EnergyGridCost
 from dao.gridcost import EnergyDirection
+from lambda_feeder import fluvius_handler as handler
+from tests.creators import create_dynamodb_table
 
 
 def mock_url(mock, url: str, file_name: str):
@@ -149,3 +153,48 @@ class TestFluviusGridCosts(TestCase):
         self.assertIsNotNone(FluviusParser.from_excel("Elektriciteit", "Drawdown", "Fluvius Antwerpen", self.excel_url))
         self.assertIsNone(FluviusParser.from_excel("Elektriciteit", "Injectie", "Fluvius Antwerpen", self.excel_url))
         self.assertIsNone(FluviusParser.from_excel("Gas", "Afname", "Fluvius Antwerpen", self.excel_url))
+
+
+@mock_dynamodb
+class TestLambdaHandlerFluvius(TestCase):
+    """Test class for lambda fluvius feeder handler"""
+
+    def setUp(self):
+        """Set up the test"""
+        self.db_table = create_dynamodb_table()
+        self.grid_costs = [
+            EnergyGridCost(
+                country="BE",
+                grid_provider="Fluvius Antwerpen",
+                direction=EnergyDirection.DRAWDOWN,
+                peak_usage_avg_monthly_cost=37.7649625,
+                peak_usage_kwh=0.00908,
+                data_management_standard=12.63,
+                data_management_dynamic=13.71,
+                public_services_kwh=0.0215095,
+                surcharges_kwh=0.0011539,
+                transmission_charges_kwh=0.0035578,
+            ),
+            EnergyGridCost(
+                country="BE",
+                grid_provider="Fluvius Limburg",
+                direction=EnergyDirection.DRAWDOWN,
+                peak_usage_avg_monthly_cost=37.7649625,
+                peak_usage_kwh=0.00908,
+                data_management_standard=12.63,
+                data_management_dynamic=13.71,
+                public_services_kwh=0.0215095,
+                surcharges_kwh=0.0011539,
+                transmission_charges_kwh=0.0035578,
+            ),
+        ]
+
+    def test_handler(self):
+        """Test the lambda handler"""
+        with patch("feeders.fluvius.FluviusParser.from_url", return_value=self.grid_costs):
+            os.environ["TABLE_NAME"] = self.db_table.name
+            self.assertEqual(0, len(self.db_table.scan().get("Items", [])))
+            handler({}, {})
+            self.assertEqual(2, len(self.db_table.scan().get("Items", [])))
+            self.assertIsNotNone(EnergyGridCost.load(self.db_table, "BE", "Fluvius Antwerpen"))
+            self.assertIsNotNone(EnergyGridCost.load(self.db_table, "BE", "Fluvius Limburg"))

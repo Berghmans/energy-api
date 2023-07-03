@@ -10,6 +10,7 @@ from feeders.engie import EngieIndexingSetting
 from feeders.eex import EEXIndexingSetting
 from feeders.entsoe import EntsoeIndexingSetting
 from feeders.fluvius import FluviusParser, EnergyGridCost
+from dao.excise import EnergyExcise
 
 
 logger = logging.getLogger(__name__)
@@ -84,6 +85,19 @@ def fluvius_handler(event, _context):
     EnergyGridCost.save_list(db_table, grid_costs)
 
 
+def excises_handler(event, _context):
+    """The excises handler"""
+    logger.info("Pushing values for BE")
+    be_excise = EnergyExcise(
+        country="BE",
+        graduated_excise={0: 0.0425755, 3000: 0.04748, 20000: 0.04546, 50000: 0.04478, 1000000: 0.04411, 25000000: 0.03628},
+        energy_contribution=0.0019261,
+    )
+    dynamodb = boto3.resource("dynamodb")
+    db_table = dynamodb.Table(os.environ["TABLE_NAME"])
+    be_excise.save(db_table)
+
+
 def handler(event, context):
     """The handler"""
     if "feed" in event:
@@ -97,5 +111,7 @@ def handler(event, context):
             entsoe_handler(event, context)
         if feeder == "fluvius":
             fluvius_handler(event, context)
+        if feeder == "excises":
+            excises_handler(event, context)
     else:
         logger.info("No feed defined, so skipping...")

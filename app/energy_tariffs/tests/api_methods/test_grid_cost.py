@@ -10,8 +10,8 @@ from tests.api_methods import TestCaseApiMethod
 
 
 @mock_dynamodb
-class TestIndexingSettingApiMethod(TestCaseApiMethod):
-    """Test class for IndexingSettingApiMethod"""
+class TestGridCostApiMethod(TestCaseApiMethod):
+    """Test class for GridCostApiMethod"""
 
     def setUp(self):
         """Set up the test"""

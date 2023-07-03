@@ -5,7 +5,15 @@ import json
 import logging
 
 from api.method import ApiMethod
-from api.methods import IndexingSettingApiMethod, IndexingSettingsApiMethod, EndPriceApiMethod, EndPricesApiMethod, ListApiMethod, GridCostApiMethod
+from api.methods import (
+    IndexingSettingApiMethod,
+    IndexingSettingsApiMethod,
+    EndPriceApiMethod,
+    EndPricesApiMethod,
+    ListApiMethod,
+    GridCostApiMethod,
+    ExciseApiMethod,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -18,6 +26,7 @@ METHOD_MAP = {
     ("endprices", "POST"): EndPricesApiMethod,
     ("list", "GET"): ListApiMethod,
     ("gridcost", "POST"): GridCostApiMethod,
+    ("excise", "POST"): ExciseApiMethod,
 }
 
 

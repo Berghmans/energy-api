@@ -91,5 +91,33 @@
         "primary": "src#DERIVED#MONTHLY#index3",
         "secondary": "1680307200",
         "last_updated": "2023-06-01 08:55:02"
+    },
+    {
+        "country": "BE",
+        "grid_provider": "Fluvius Antwerpen",
+        "direction": "DRAWDOWN",
+        "peak_usage_avg_monthly_cost": "37.7649625",
+        "peak_usage_kwh": "0.00908",
+        "data_management_standard": "12.63",
+        "data_management_dynamic": "13.71",
+        "public_services_kwh": "0.0215095",
+        "surcharges_kwh": "0.0011539",
+        "transmission_charges_kwh": "0.0035578",
+        "primary": "energygridcost#BE#Fluvius Antwerpen",
+        "secondary": "2152671090581742404"
+    },
+    {
+        "country": "BE",
+        "graduated_excise": {
+            "0": "0.0425755",
+            "3000": "0.04748",
+            "20000": "0.04546",
+            "50000": "0.04478",
+            "1000000": "0.04411",
+            "25000000": "0.03628"
+        },
+        "energy_contribution": "0.0019261",
+        "primary": "excise#BE",
+        "secondary": "2246188729725844961"
     }
 ]

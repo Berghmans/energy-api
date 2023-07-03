@@ -90,7 +90,12 @@ class TestEndPricesApiMethod(TestCaseApiMethod):
                 "q2": request,
             }
         )
-        expected = {**bare_method_result.body, "end_price": ((self.index_value * slope) + intercept) * taxes}
+        expected = {
+            **bare_method_result.body,
+            "end_price": ((self.index_value * slope) + intercept) * taxes,
+            "excise": {"energy": 1, "excise_cost": 0},
+            "grid": {"energy": 1, "grid_cost": 0},
+        }
         self.assertProcess(method, 200, {"q1": expected, "q2": expected})
 
     def test_process_not_existing(self):
